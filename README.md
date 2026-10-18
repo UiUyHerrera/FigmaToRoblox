@@ -2,6 +2,17 @@
 
 Design a screen in Figma, copy a six-letter code, paste it in Roblox Studio. FigmaToRoblox rebuilds the frame as native Roblox UI (Frames, TextLabels, ImageLabels, UICorner, UIStroke, UIGradient, layouts) and wires up the interactions you tag in Figma: buttons, panels that open and close, tabs, hover effects and entrance animations.
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="docs/plugin-convert-light.png">
+    <img src="docs/plugin-convert.png" width="300" alt="FigmaToRoblox in Figma, Convert tab: the selected frame and the code K7Q2MX ready to paste in Studio">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: light)" srcset="docs/plugin-interact-light.png">
+    <img src="docs/plugin-interact.png" width="300" alt="Interact tab: preview of the selected frame with buttons to try its appear, exit and idle effects">
+  </picture>
+</p>
+
 ## How it works
 
 ```mermaid
