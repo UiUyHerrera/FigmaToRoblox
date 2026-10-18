@@ -2,16 +2,25 @@
 
 Design a screen in Figma, copy a six-letter code, paste it in Roblox Studio. FigmaToRoblox rebuilds the frame as native Roblox UI (Frames, TextLabels, ImageLabels, UICorner, UIStroke, UIGradient, layouts) and wires up the interactions you tag in Figma: buttons, panels that open and close, tabs, hover effects and entrance animations.
 
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="docs/plugin-convert-light.png">
-    <img src="docs/plugin-convert.png" width="300" alt="FigmaToRoblox in Figma, Convert tab: the selected frame and the code K7Q2MX ready to paste in Studio">
-  </picture>
-  <picture>
-    <source media="(prefers-color-scheme: light)" srcset="docs/plugin-interact-light.png">
-    <img src="docs/plugin-interact.png" width="300" alt="Interact tab: preview of the selected frame with buttons to try its appear, exit and idle effects">
-  </picture>
-</p>
+## Walkthrough
+
+**1. Design in Figma and tag the layers.** The effects go in the layer name: this button is `Group 2_grow_squish_popout_pop`.
+
+<img src="docs/1-figma-design.png" width="100%" alt="A blue button designed in Figma, with the layer named Group 2_grow_squish_popout_pop">
+
+**2. Preview the effects and convert.** The Interact tab plays the hover, click, appear and exit effects on the selected layer before anything reaches Roblox.
+
+<img src="docs/2-figma-plugin.png" width="100%" alt="The plugin panel next to the Figma canvas, previewing the selected button">
+
+**3. Paste the code in Studio.** Pick where the UI sits on screen and import.
+
+<p align="center"><img src="docs/3-studio-import.png" width="260" alt="Studio panel with the code 66VH2L, image upload on, live sync off, placement center and the Import button"></p>
+
+**4. Press Play.** The button is native Roblox UI, with its effects running.
+
+<img src="docs/4-in-game.png" width="100%" alt="The same button inside a running Roblox game">
+
+<sub>These screenshots are from 1.0, when the project was still called FigBridge.</sub>
 
 ## How it works
 
@@ -26,7 +35,7 @@ flowchart LR
 ```
 
 1. The Figma plugin walks the selected frame and turns every layer into a node with its position, size, fills, strokes, corners, text and tags. What Roblox can't draw natively (vector shapes, blend modes, and decorations when *Exact look* is on) goes out as PNG.
-2. A small Node server on your machine keeps the design under a random six-letter code for six hours and uploads the images to Roblox through Open Cloud. Uploads are cached by image hash, so converting the same frame again doesn't upload anything twice.
+2. A small Node server on your machine keeps the design under a random six-letter code for six hours. If you gave it an Open Cloud key, it also uploads the images to Roblox; if not, the Studio plugin uploads them with your Studio account.
 3. In Studio, the FigmaToRoblox plugin downloads the design with that code and builds a ScreenGui in StarterGui. It adds a LocalScript that runs the tagged effects and a `UI` ModuleScript with a typed reference to every layer, for your own scripts.
 
 The server has no dependencies: it's Node's `http` module and `fetch`.
@@ -67,13 +76,17 @@ npm start                # starts the server on http://localhost:7777
 
 ### Image upload
 
-Roblox only shows uploaded assets in a running game. Without an Open Cloud key, images appear in Studio while you edit but disappear when you press Play.
+Roblox only shows uploaded images in a running game. There are two ways to get them there:
 
-1. Go to the [Creator Dashboard credentials page](https://create.roblox.com/dashboard/credentials) and create an API key named `FigmaToRoblox`.
-2. Under Access Permissions, add **Assets** with **Read** and **Write**.
-3. Under Accepted IP Addresses, add your IP (or `0.0.0.0/0`).
-4. Copy `server/config.example.json` to `server/config.json` and fill in `apiKey` and `userId` (the number in your Roblox profile URL). To upload to a group, use `groupId` instead of `userId`.
-5. Restart the server. It should print `Open Cloud upload: enabled`.
+- **From Studio** (the default). With **Upload images to my account** on in the Studio panel, the plugin uploads each image with the account you're signed in to Studio with. No key needed.
+- **From the server.** With an Open Cloud key, the server uploads the images as soon as you convert, and Studio only downloads their ids. The setup wizard asks for this key, or you can do it by hand:
+  1. Go to the [Creator Dashboard credentials page](https://create.roblox.com/dashboard/credentials) and create an API key named `FigmaToRoblox`.
+  2. Under Access Permissions, add **Assets** with **Read** and **Write**.
+  3. Under Accepted IP Addresses, add your IP (or `0.0.0.0/0`).
+  4. Copy `server/config.example.json` to `server/config.json` and fill in `apiKey` and `userId` (the number in your Roblox profile URL). To upload to a group, use `groupId` instead of `userId`.
+  5. Restart the server. It should print `Open Cloud upload: enabled`.
+
+With both off, images are temporary previews: they show in Studio but not when you press Play. Uploaded images are cached by hash on both sides, so converting the same frame again doesn't upload anything twice.
 
 `server/config.json` is ignored by git. Don't share it: anyone with that key can upload assets to your account.
 
@@ -81,7 +94,7 @@ Roblox only shows uploaded assets in a running game. Without an Open Cloud key, 
 
 1. Start the server (desktop shortcut, `FigmaToRoblox.bat` or `npm start`) and leave the window open.
 2. In Figma, select one frame and run FigmaToRoblox. **Check before converting** lists what will be skipped or turned into an image. Then click **Convert** and copy the code.
-3. In Studio: Plugins → FigmaToRoblox → paste the code → **Import**. The UI lands in StarterGui.
+3. In Studio: Plugins → FigmaToRoblox → paste the code → **Import**. The UI lands in StarterGui. The **Placement** grid picks where it sits on screen, and **Start hidden** keeps it closed until a button or a script opens it.
 4. Press Play to try the effects.
 
 **Live sync**: turn it on in the Convert tab and every edit you make in Figma shows up in Studio on its own, under the same code, as long as both are open.
@@ -150,7 +163,7 @@ Layer names become identifiers: `Item 1` turns into `UI.Item1`, and repeated nam
 |---|---|
 | Cannot reach the FigmaToRoblox server | The server window is closed. Open the shortcut or run `npm start`. |
 | Code not found or expired | Codes last six hours and don't survive a server restart. Convert again. |
-| Images don't show when playing | The server must say `Open Cloud upload: enabled`. Check `server/config.json`, or delete it and run `Setup.bat` again. |
+| Images don't show when playing | Turn on **Upload images to my account** in the Studio panel, or set up the Open Cloud key (the server must say `Open Cloud upload: enabled`). |
 | Studio still shows the old plugin | Close Studio completely and open it again. |
 
 ## Project layout
