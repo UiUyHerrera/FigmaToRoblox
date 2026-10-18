@@ -1,5 +1,5 @@
 {
-  "name": "FigBridge",
+  "name": "FigmaToRoblox",
   "id": "figbridge-local-dev",
   "api": "1.0.0",
   "main": "code.js",
@@ -9,6 +9,6 @@
   "networkAccess": {
     "allowedDomains": ["none"],
     "devAllowedDomains": ["http://localhost:7777"],
-    "reasoning": "Sends the exported design to the local FigBridge server."
+    "reasoning": "Sends the exported design to the local FigmaToRoblox server."
   }
 }

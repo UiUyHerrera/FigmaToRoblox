@@ -1,4 +1,4 @@
-# FigBridge setup: installs everything it can and only asks for what it can't get by itself.
+# FigmaToRoblox setup: installs everything it can and only asks for what it can't get by itself.
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 Set-Location $root
@@ -9,7 +9,7 @@ function Info($text) { Write-Host "      $text" -ForegroundColor Gray }
 function Ask($text) { Write-Host ""; return (Read-Host "  > $text") }
 
 Clear-Host
-Write-Host "FigBridge setup" -ForegroundColor White
+Write-Host "FigmaToRoblox setup" -ForegroundColor White
 Write-Host "Turns Figma designs into Roblox UI. This takes about 3 minutes." -ForegroundColor Gray
 
 # ---------------------------------------------------------------- 1. Node.js
@@ -20,7 +20,7 @@ function Refresh-Path {
 if (Get-Command node -ErrorAction SilentlyContinue) {
   Ok ("Node.js " + (node -v) + " is installed")
 } else {
-  Info "Node.js is needed to run the FigBridge server."
+  Info "Node.js is needed to run the FigmaToRoblox server."
   $yes = Ask "Install Node.js now? (Y/n)"
   if ($yes -match '^[nN]') { Write-Host "Install it from https://nodejs.org and run Setup again."; exit 1 }
   if (Get-Command winget -ErrorAction SilentlyContinue) {
@@ -64,7 +64,7 @@ if ($config -and $config.apiKey -and $config.apiKey -ne "PASTE_YOUR_API_KEY_HERE
   Step 3 "Roblox API key (so images upload to your account)"
   Info "A browser tab will open. On that page:"
   Info "  1. Click 'Create API Key'"
-  Info "  2. Name: FigBridge"
+  Info "  2. Name: FigmaToRoblox"
   Info "  3. Access Permissions: choose 'Assets', click Add, tick Read and Write"
   Info "  4. Accepted IP Addresses: add 0.0.0.0/0"
   Info "  5. Click 'Save & Generate Key', then 'Copy Key to Clipboard'"
@@ -84,19 +84,19 @@ if ($config -and $config.apiKey -and $config.apiKey -ne "PASTE_YOUR_API_KEY_HERE
 Step 4 "Roblox Studio plugin"
 node roblox-plugin\build.js --install | Out-Null
 if ($LASTEXITCODE -ne 0) { Write-Host "Could not install the Studio plugin." -ForegroundColor Red; exit 1 }
-Ok "Installed. Restart Roblox Studio and open Plugins -> FigBridge."
+Ok "Installed. Restart Roblox Studio and open Plugins -> FigmaToRoblox."
 
 # ---------------------------------------------------------------- 5. Desktop shortcut
 Step 5 "Desktop shortcut"
 try {
   $shell = New-Object -ComObject WScript.Shell
-  $lnk = $shell.CreateShortcut((Join-Path ([Environment]::GetFolderPath("Desktop")) "FigBridge.lnk"))
-  $lnk.TargetPath = Join-Path $root "FigBridge.bat"
+  $lnk = $shell.CreateShortcut((Join-Path ([Environment]::GetFolderPath("Desktop")) "FigmaToRoblox.lnk"))
+  $lnk.TargetPath = Join-Path $root "FigmaToRoblox.bat"
   $lnk.WorkingDirectory = $root
-  $lnk.Description = "Start the FigBridge server"
+  $lnk.Description = "Start the FigmaToRoblox server"
   $lnk.Save()
-  Ok "Created 'FigBridge' on your desktop. Open it whenever you want to use FigBridge."
-} catch { Info "Could not create the shortcut; use FigBridge.bat in this folder instead." }
+  Ok "Created 'FigmaToRoblox' on your desktop. Open it whenever you want to use FigmaToRoblox."
+} catch { Info "Could not create the shortcut; use FigmaToRoblox.bat in this folder instead." }
 
 # ---------------------------------------------------------------- 6. Figma (manual)
 Step 6 "Figma plugin (one manual step)"
@@ -109,5 +109,5 @@ Start-Process explorer.exe (Join-Path $root "figma-plugin")
 
 Write-Host ""
 Write-Host "All set!" -ForegroundColor Green
-$start = Ask "Start the FigBridge server now? (Y/n)"
-if ($start -notmatch '^[nN]') { Start-Process (Join-Path $root "FigBridge.bat") }
+$start = Ask "Start the FigmaToRoblox server now? (Y/n)"
+if ($start -notmatch '^[nN]') { Start-Process (Join-Path $root "FigmaToRoblox.bat") }

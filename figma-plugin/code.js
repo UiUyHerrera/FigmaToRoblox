@@ -1,4 +1,4 @@
-// FigBridge — Figma side. Serializes one frame into a JSON tree the Studio plugin rebuilds as native UI.
+// FigmaToRoblox — Figma side. Serializes one frame into a JSON tree the Studio plugin rebuilds as native UI.
 
 // Tag catalogue: key, whether it takes an argument, group and a short description (shown in the Tags tab).
 const TAGS = [

@@ -1,5 +1,5 @@
 --!nocheck
--- FigBridge — Roblox Studio side. Downloads a design by code and rebuilds it as native UI.
+-- FigmaToRoblox — Roblox Studio side. Downloads a design by code and rebuilds it as native UI.
 local HttpService = game:GetService("HttpService")
 local AssetService = game:GetService("AssetService")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
@@ -7,7 +7,7 @@ local StarterGui = game:GetService("StarterGui")
 local Selection = game:GetService("Selection")
 
 local RUNTIME_SOURCE = [==[--!nocheck
--- FigBridge runtime: wires buttons, panels, tabs, live data and animations for an imported design.
+-- FigmaToRoblox runtime: wires buttons, panels, tabs, live data and animations for an imported design.
 -- Settings live as attributes named "<tag>_<Setting>" on each tagged instance.
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -898,7 +898,7 @@ local function setupButton(btn, t)
 		end
 	end)
 	for _, k in { "open", "toggle", "tab" } do
-		if t[k] and not panels[t[k]] then warn("[FigBridge] " .. btn.Name .. ": no panel named '" .. t[k] .. "' (add _panel to it)") end
+		if t[k] and not panels[t[k]] then warn("[FigmaToRoblox] " .. btn.Name .. ": no panel named '" .. t[k] .. "' (add _panel to it)") end
 	end
 end
 
@@ -1032,7 +1032,7 @@ local function setup(el, t)
 			tgt:SetAttribute("Owner", nil)
 			onHover(tgt, function(hover) if hover then el:SetAttribute("Owner", tgt.Name) end end)
 		end
-		if #targets == 0 then warn("[FigBridge] " .. el.Name .. ": _card found no button to follow") end
+		if #targets == 0 then warn("[FigmaToRoblox] " .. el.Name .. ": _card found no button to follow") end
 	end
 
 	-- shine sweeps
@@ -1286,7 +1286,7 @@ local function setup(el, t)
 				end
 			end)
 		else
-			warn("[FigBridge] " .. el.Name .. ": _fall needs an image (tag the image, or a frame with an image inside)")
+			warn("[FigmaToRoblox] " .. el.Name .. ": _fall needs an image (tag the image, or a frame with an image inside)")
 		end
 	end
 	if t.drift then
@@ -1314,7 +1314,7 @@ local function setup(el, t)
 				layer.Position = UDim2.fromOffset(ox - tx, oy - ty)
 			end)
 		else
-			warn("[FigBridge] " .. el.Name .. ": _drift needs an image fill set to Tile in Figma")
+			warn("[FigmaToRoblox] " .. el.Name .. ": _drift needs an image fill set to Tile in Figma")
 		end
 	end
 	-- Roblox UI is flat: 3D turns are faked by foreshortening (width/height scale by cos(angle))
@@ -1353,7 +1353,7 @@ local function setup(el, t)
 			for _, d in group:GetDescendants() do
 				if d:IsA("GuiButton") and d ~= el and not (TAGS[d] and TAGS[d].nopointer) then table.insert(buttons, d) end
 			end
-			if #buttons == 0 then warn("[FigBridge] " .. el.Name .. ": _pointer found no buttons beside it") return end
+			if #buttons == 0 then warn("[FigmaToRoblox] " .. el.Name .. ": _pointer found no buttons beside it") return end
 			local sc = scaleNow()
 			local mine = el.AbsolutePosition + el.AbsoluteSize / 2
 			local nearest, best = buttons[1], math.huge
@@ -1504,7 +1504,7 @@ local function setup(el, t)
 			end
 			gradientLoop(g, "stroke")
 		else
-			warn("[FigBridge] " .. el.Name .. ": _stroke needs an outline (Stroke) in Figma")
+			warn("[FigmaToRoblox] " .. el.Name .. ": _stroke needs an outline (Stroke) in Figma")
 		end
 	end
 	if t.flow then
@@ -1555,7 +1555,7 @@ local function setup(el, t)
 		local MarketplaceService = game:GetService("MarketplaceService")
 		el.Activated:Connect(function()
 			local id = tonumber(t.buy)
-			if not id then warn("[FigBridge] " .. el.Name .. ": _buy needs a number, e.g. _buy:12345") return end
+			if not id then warn("[FigmaToRoblox] " .. el.Name .. ": _buy needs a number, e.g. _buy:12345") return end
 			if P(el, "buy", "Type") == "GamePass" then MarketplaceService:PromptGamePassPurchase(player, id)
 			else MarketplaceService:PromptProductPurchase(player, id) end
 		end)
@@ -1587,7 +1587,7 @@ for el, t in TAGS do
 end
 for el, t in TAGS do
 	local ok, err = pcall(setup, el, t)
-	if not ok then warn("[FigBridge] " .. el.Name .. ": " .. tostring(err)) end
+	if not ok then warn("[FigmaToRoblox] " .. el.Name .. ": " .. tostring(err)) end
 end
 for g, buttons in tabGroups do
 	table.sort(buttons, function(a, b) return a.LayoutOrder < b.LayoutOrder end)
@@ -1646,7 +1646,7 @@ if promptOwner and pp then
 	pp.PromptButtonHoldEnded:Connect(function() holdToken += 1 setFill(0) end)
 	pp.Triggered:Connect(function() holdToken += 1 setFill(0) end)
 elseif promptOwner then
-	warn("[FigBridge] _prompt: no ProximityPrompt found on the adornee part")
+	warn("[FigmaToRoblox] _prompt: no ProximityPrompt found on the adornee part")
 end
 
 -- UI.Toast: small pill notifications that stack at the top of the screen
@@ -1718,7 +1718,7 @@ if command then
 				if str then
 					TAGS[d] = parseTags(str)
 					local ok, err = pcall(setup, d, TAGS[d])
-					if not ok then warn("[FigBridge] " .. d.Name .. ": " .. tostring(err)) end
+					if not ok then warn("[FigmaToRoblox] " .. d.Name .. ": " .. tostring(err)) end
 				end
 				if (d:IsA("TextLabel") or d:IsA("TextButton")) and d:GetAttribute("FB_Template") then table.insert(liveTexts, d) end
 			end
@@ -1853,7 +1853,7 @@ end
 
 local function getJSON(url)
 	local ok, res = pcall(HttpService.RequestAsync, HttpService, { Url = url, Method = "GET" })
-	if not ok then error("Cannot reach the FigBridge server (" .. tostring(res) .. "). Is it running?", 0) end
+	if not ok then error("Cannot reach the FigmaToRoblox server (" .. tostring(res) .. "). Is it running?", 0) end
 	local data
 	pcall(function() data = HttpService:JSONDecode(res.Body) end)
 	if not res.Success then
@@ -2505,7 +2505,7 @@ generateModule = function(gui)
 	end
 	walk(gui, {})
 	local out = {
-		"-- Generated by FigBridge. Re-importing rewrites this file, so keep your code in your own scripts.",
+		"-- Generated by FigmaToRoblox. Re-importing rewrites this file, so keep your code in your own scripts.",
 		"-- From a LocalScript inside this ScreenGui:",
 		"--   local UI = require(script.Parent:WaitForChild(\"UI\"))",
 		entries[1] and ("--   UI." .. entries[#entries > 1 and 2 or 1].id .. " ...") or "",
@@ -2629,8 +2629,8 @@ local function loadImages(server, code, list, upload, status, warnings)
 		if upload then
 			local ok2, result, assetId = pcall(function()
 				return AssetService:CreateAssetAsync(ei, Enum.AssetType.Image, {
-					Name = "FigBridge " .. string.sub(im.id, 1, 8),
-					Description = "Uploaded by FigBridge",
+					Name = "FigmaToRoblox " .. string.sub(im.id, 1, 8),
+					Description = "Uploaded by FigmaToRoblox",
 				})
 			end)
 			if ok2 and result == Enum.CreateAssetResult.Success and assetId then
@@ -2651,13 +2651,13 @@ end
 
 ---------------------------------------------------------------- UI
 local TweenService = game:GetService("TweenService")
-local toolbar = plugin:CreateToolbar("FigBridge")
-local toggleBtn = toolbar:CreateButton("FigBridge", "Import a Figma design by code", "rbxasset://textures/ui/GuiImagePlaceholder.png")
+local toolbar = plugin:CreateToolbar("FigmaToRoblox")
+local toggleBtn = toolbar:CreateButton("FigmaToRoblox", "Import a Figma design by code", "rbxasset://textures/ui/GuiImagePlaceholder.png")
 toggleBtn.ClickableWhenViewportHidden = true
 
 local widget = plugin:CreateDockWidgetPluginGui("FigBridge",
 	DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Float, false, false, 320, 400, 280, 340))
-widget.Title = "FigBridge"
+widget.Title = "FigmaToRoblox"
 toggleBtn.Click:Connect(function() widget.Enabled = not widget.Enabled end)
 widget:GetPropertyChangedSignal("Enabled"):Connect(function() toggleBtn:SetActive(widget.Enabled) end)
 
@@ -2740,7 +2740,7 @@ head.AutomaticSize = Enum.AutomaticSize.Y
 head.LayoutOrder = 1
 head.Parent = root
 vlist(head, 2)
-text(head, "FigBridge", 22, C.label, Enum.FontWeight.Bold, 1)
+text(head, "FigmaToRoblox", 22, C.label, Enum.FontWeight.Bold, 1)
 text(head, "Paste the code from the Figma plugin.", 14, C.label2, Enum.FontWeight.Regular, 2)
 
 -- code card
@@ -3028,7 +3028,7 @@ local function import(fromLive)
 		local warnings = table.clone(data.doc.warnings or {})
 		local images = loadImages(server, code, data.images or {}, uploadImages, function(t) setStatus(t, "busy") end, warnings)
 		setStatus("Building UI…", "busy")
-		local recording = ChangeHistoryService:TryBeginRecording("FigBridge import")
+		local recording = ChangeHistoryService:TryBeginRecording("FigmaToRoblox import")
 		local builder = Builder.new(data.doc, images)
 		local gui = builder:buildRoot()
 		gui:SetAttribute("FB_Code", code)
@@ -3069,7 +3069,7 @@ local function import(fromLive)
 			local ex = Instance.new("LocalScript")
 			ex.Name = "MyUI"
 			ex.Source = table.concat({
-				"-- Your code for this UI. FigBridge keeps this script when you re-import.",
+				"-- Your code for this UI. FigmaToRoblox keeps this script when you re-import.",
 				"local UI = require(script.Parent:WaitForChild(\"UI\"))",
 				"",
 				firstButton and ("-- UI." .. ident(firstButton.Name) .. ".Activated:Connect(function()") or "-- UI.MyButton.Activated:Connect(function()",
@@ -3085,7 +3085,7 @@ local function import(fromLive)
 		if recording then ChangeHistoryService:FinishRecording(recording, Enum.FinishRecordingOperation.Commit) end
 		if not fromLive then Selection:Set({ gui }) end
 		for _, w in builder.warnings do table.insert(warnings, w) end
-		for _, w in warnings do warn("[FigBridge] " .. w) end
+		for _, w in warnings do warn("[FigmaToRoblox] " .. w) end
 		if fromLive then
 			setStatus(("Live · synced “%s” at %s%s"):format(gui.Name, os.date("%H:%M:%S"),
 				kept > 0 and (" · kept " .. kept .. " script(s)") or ""), "ok")

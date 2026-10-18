@@ -1,4 +1,4 @@
-// FigBridge relay: Figma uploads a design, gets a 6-character code; the Studio plugin downloads it by code.
+// FigmaToRoblox relay: Figma uploads a design, gets a 6-character code; the Studio plugin downloads it by code.
 // No dependencies. Run: node server.js   (port via PORT env, default 7777)
 const http = require("http");
 
@@ -26,8 +26,8 @@ async function uploadDecal(id, pngBase64) {
   const form = new FormData();
   form.append("request", JSON.stringify({
     assetType: "Decal",
-    displayName: "FigBridge " + id.slice(0, 8),
-    description: "Uploaded by FigBridge",
+    displayName: "FigmaToRoblox " + id.slice(0, 8),
+    description: "Uploaded by FigmaToRoblox",
     creationContext: { creator },
   }));
   form.append("fileContent", new Blob([Buffer.from(pngBase64, "base64")], { type: "image/png" }), "image.png");
@@ -154,4 +154,4 @@ const server = http.createServer((req, res) => {
   send(res, 404, { error: "Not found" });
 });
 
-server.listen(PORT, () => console.log(`FigBridge server running on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`FigmaToRoblox server running on http://localhost:${PORT}`));

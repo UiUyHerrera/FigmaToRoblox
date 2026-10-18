@@ -1,5 +1,5 @@
-// Builds dist/FigBridge.lua (single-file Studio plugin) from src/.
-// Usage: node build.js            -> writes dist/FigBridge.lua
+// Builds dist/FigmaToRoblox.lua (single-file Studio plugin) from src/.
+// Usage: node build.js            -> writes dist/FigmaToRoblox.lua
 //        node build.js --install  -> also copies it into the Roblox Plugins folder
 const fs = require("fs");
 const path = require("path");
@@ -14,7 +14,7 @@ const plugin = src("plugin.lua")
   .replace("--@DEFAULTS", defaults)
   .replace("--@RUNTIME", "[" + level + "[" + runtime + "]" + level + "]");
 
-const out = path.join(__dirname, "dist", "FigBridge.lua");
+const out = path.join(__dirname, "dist", "FigmaToRoblox.lua");
 fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, plugin);
 console.log("Built " + out);
@@ -50,6 +50,9 @@ if (process.argv.includes("--install")) {
     ? path.join(process.env.LOCALAPPDATA, "Roblox", "Plugins")
     : path.join(process.env.HOME, "Documents", "Roblox", "Plugins");
   fs.mkdirSync(dir, { recursive: true });
-  fs.copyFileSync(out, path.join(dir, "FigBridge.lua"));
+  fs.copyFileSync(out, path.join(dir, "FigmaToRoblox.lua"));
+  // Earlier versions installed the plugin as FigBridge.lua; remove it so Studio doesn't load two copies.
+  const legacy = path.join(dir, "FigBridge.lua");
+  if (fs.existsSync(legacy)) fs.unlinkSync(legacy);
   console.log("Installed to " + dir + " — restart Studio.");
 }

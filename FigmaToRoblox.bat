@@ -1,6 +1,6 @@
 @echo off
-rem FigBridge one-click start: installs the Studio plugin and runs the local server.
-title FigBridge
+rem FigmaToRoblox one-click start: installs the Studio plugin and runs the local server.
+title FigmaToRoblox
 cd /d "%~dp0"
 
 where node >nul 2>nul
@@ -25,7 +25,7 @@ if not exist server\config.json (
 )
 
 echo.
-echo Starting the FigBridge server. Keep this window open while you work.
+echo Starting the FigmaToRoblox server. Keep this window open while you work.
 echo Restart Roblox Studio if it was open, so it loads the new plugin.
 echo.
 node server\server.js

@@ -1,5 +1,5 @@
 --!nocheck
--- FigBridge runtime: wires buttons, panels, tabs, live data and animations for an imported design.
+-- FigmaToRoblox runtime: wires buttons, panels, tabs, live data and animations for an imported design.
 -- Settings live as attributes named "<tag>_<Setting>" on each tagged instance.
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -832,7 +832,7 @@ local function setupButton(btn, t)
 		end
 	end)
 	for _, k in { "open", "toggle", "tab" } do
-		if t[k] and not panels[t[k]] then warn("[FigBridge] " .. btn.Name .. ": no panel named '" .. t[k] .. "' (add _panel to it)") end
+		if t[k] and not panels[t[k]] then warn("[FigmaToRoblox] " .. btn.Name .. ": no panel named '" .. t[k] .. "' (add _panel to it)") end
 	end
 end
 
@@ -966,7 +966,7 @@ local function setup(el, t)
 			tgt:SetAttribute("Owner", nil)
 			onHover(tgt, function(hover) if hover then el:SetAttribute("Owner", tgt.Name) end end)
 		end
-		if #targets == 0 then warn("[FigBridge] " .. el.Name .. ": _card found no button to follow") end
+		if #targets == 0 then warn("[FigmaToRoblox] " .. el.Name .. ": _card found no button to follow") end
 	end
 
 	-- shine sweeps
@@ -1220,7 +1220,7 @@ local function setup(el, t)
 				end
 			end)
 		else
-			warn("[FigBridge] " .. el.Name .. ": _fall needs an image (tag the image, or a frame with an image inside)")
+			warn("[FigmaToRoblox] " .. el.Name .. ": _fall needs an image (tag the image, or a frame with an image inside)")
 		end
 	end
 	if t.drift then
@@ -1248,7 +1248,7 @@ local function setup(el, t)
 				layer.Position = UDim2.fromOffset(ox - tx, oy - ty)
 			end)
 		else
-			warn("[FigBridge] " .. el.Name .. ": _drift needs an image fill set to Tile in Figma")
+			warn("[FigmaToRoblox] " .. el.Name .. ": _drift needs an image fill set to Tile in Figma")
 		end
 	end
 	-- Roblox UI is flat: 3D turns are faked by foreshortening (width/height scale by cos(angle))
@@ -1287,7 +1287,7 @@ local function setup(el, t)
 			for _, d in group:GetDescendants() do
 				if d:IsA("GuiButton") and d ~= el and not (TAGS[d] and TAGS[d].nopointer) then table.insert(buttons, d) end
 			end
-			if #buttons == 0 then warn("[FigBridge] " .. el.Name .. ": _pointer found no buttons beside it") return end
+			if #buttons == 0 then warn("[FigmaToRoblox] " .. el.Name .. ": _pointer found no buttons beside it") return end
 			local sc = scaleNow()
 			local mine = el.AbsolutePosition + el.AbsoluteSize / 2
 			local nearest, best = buttons[1], math.huge
@@ -1438,7 +1438,7 @@ local function setup(el, t)
 			end
 			gradientLoop(g, "stroke")
 		else
-			warn("[FigBridge] " .. el.Name .. ": _stroke needs an outline (Stroke) in Figma")
+			warn("[FigmaToRoblox] " .. el.Name .. ": _stroke needs an outline (Stroke) in Figma")
 		end
 	end
 	if t.flow then
@@ -1489,7 +1489,7 @@ local function setup(el, t)
 		local MarketplaceService = game:GetService("MarketplaceService")
 		el.Activated:Connect(function()
 			local id = tonumber(t.buy)
-			if not id then warn("[FigBridge] " .. el.Name .. ": _buy needs a number, e.g. _buy:12345") return end
+			if not id then warn("[FigmaToRoblox] " .. el.Name .. ": _buy needs a number, e.g. _buy:12345") return end
 			if P(el, "buy", "Type") == "GamePass" then MarketplaceService:PromptGamePassPurchase(player, id)
 			else MarketplaceService:PromptProductPurchase(player, id) end
 		end)
@@ -1521,7 +1521,7 @@ for el, t in TAGS do
 end
 for el, t in TAGS do
 	local ok, err = pcall(setup, el, t)
-	if not ok then warn("[FigBridge] " .. el.Name .. ": " .. tostring(err)) end
+	if not ok then warn("[FigmaToRoblox] " .. el.Name .. ": " .. tostring(err)) end
 end
 for g, buttons in tabGroups do
 	table.sort(buttons, function(a, b) return a.LayoutOrder < b.LayoutOrder end)
@@ -1580,7 +1580,7 @@ if promptOwner and pp then
 	pp.PromptButtonHoldEnded:Connect(function() holdToken += 1 setFill(0) end)
 	pp.Triggered:Connect(function() holdToken += 1 setFill(0) end)
 elseif promptOwner then
-	warn("[FigBridge] _prompt: no ProximityPrompt found on the adornee part")
+	warn("[FigmaToRoblox] _prompt: no ProximityPrompt found on the adornee part")
 end
 
 -- UI.Toast: small pill notifications that stack at the top of the screen
@@ -1652,7 +1652,7 @@ if command then
 				if str then
 					TAGS[d] = parseTags(str)
 					local ok, err = pcall(setup, d, TAGS[d])
-					if not ok then warn("[FigBridge] " .. d.Name .. ": " .. tostring(err)) end
+					if not ok then warn("[FigmaToRoblox] " .. d.Name .. ": " .. tostring(err)) end
 				end
 				if (d:IsA("TextLabel") or d:IsA("TextButton")) and d:GetAttribute("FB_Template") then table.insert(liveTexts, d) end
 			end

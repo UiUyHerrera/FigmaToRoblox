@@ -1,4 +1,4 @@
-FigBridge - Figma to Roblox Studio
+FigmaToRoblox - Figma to Roblox Studio
 ==================================
 
 Turns a Figma frame into native Roblox UI, with hover/click effects and animations,
@@ -12,29 +12,29 @@ Quick install (Windows)
    - ask for your Roblox username and find your User ID
    - open the Roblox page to create your API key and tell you what to click
    - install the Roblox Studio plugin
-   - put a "FigBridge" shortcut on your desktop
+   - put a "FigmaToRoblox" shortcut on your desktop
    - show you the one step you must do in Figma yourself
-3. Restart Roblox Studio completely. You will see Plugins -> FigBridge.
+3. Restart Roblox Studio completely. You will see Plugins -> FigmaToRoblox.
 4. In the Figma desktop app (once):
    Plugins -> Development -> Import plugin from manifest -> pick figma-plugin\manifest.json
 
-Every time you work: open the "FigBridge" shortcut on your desktop and keep that window open.
+Every time you work: open the "FigmaToRoblox" shortcut on your desktop and keep that window open.
 
 Never share server\config.json with anyone: it holds your Roblox API key.
 
 How to use
 ----------
-- In Figma: select a frame -> FigBridge -> Interact tab to add effects (hover, click,
+- In Figma: select a frame -> FigmaToRoblox -> Interact tab to add effects (hover, click,
   appear, exit, idle, text, sound) -> Convert tab -> Convert -> copy the code.
-- In Roblox Studio: Plugins -> FigBridge -> paste the code -> Import.
+- In Roblox Studio: Plugins -> FigmaToRoblox -> paste the code -> Import.
 - Press Play to try the animations.
 - Buttons that open a window: Interact -> On click -> Pick... and choose the window.
 - Scripting: every import creates a "UI" ModuleScript. See README.md, section "Scripting".
 
 Troubleshooting
 ---------------
-- "Cannot reach the FigBridge server": the FigBridge window is not open.
+- "Cannot reach the FigmaToRoblox server": the FigmaToRoblox window is not open.
 - "Code not found or expired": codes last 6 hours; convert again.
-- Images don't show in Play: the FigBridge window should say "Open Cloud upload: enabled".
+- Images don't show in Play: the FigmaToRoblox window should say "Open Cloud upload: enabled".
   If not, delete server\config.json and run Setup.bat again.
 - Studio shows an old version of the plugin: close Studio completely and open it again.
