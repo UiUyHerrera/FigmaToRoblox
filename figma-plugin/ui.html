@@ -1,0 +1,1255 @@
+<style>
+  :root {
+    --bg: #f5f5f7; --surface: rgba(255,255,255,.72); --surface-solid: #fff; --fill: rgba(120,120,128,.12);
+    --fill-strong: rgba(120,120,128,.2); --label: #1d1d1f; --label2: rgba(60,60,67,.62); --label3: rgba(60,60,67,.36);
+    --sep: rgba(60,60,67,.14); --accent: #007aff; --accent-press: #0062cc; --green: #34c759; --red: #ff3b30;
+    --shadow: 0 1px 2px rgba(0,0,0,.06), 0 8px 24px rgba(0,0,0,.06); --stage: #e8e8ed;
+  }
+  .figma-dark {
+    --bg: #1c1c1e; --surface: rgba(44,44,46,.72); --surface-solid: #2c2c2e; --fill: rgba(118,118,128,.24);
+    --fill-strong: rgba(118,118,128,.36); --label: #f5f5f7; --label2: rgba(235,235,245,.6); --label3: rgba(235,235,245,.3);
+    --sep: rgba(84,84,88,.6); --accent: #0a84ff; --accent-press: #409cff; --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.25); --stage: #111113;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  /* full-window sheet: always fits, scrolls inside */
+  #sheetScrim { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,.35); display: flex; align-items: stretch; justify-content: center; padding: 10px; animation: fadeIn .2s ease-out; }
+  #sheet { width: 100%; max-width: 720px; display: flex; flex-direction: column; overflow: hidden; background: var(--surface-solid); border-radius: 16px; padding: 14px;
+    box-shadow: 0 8px 30px rgba(0,0,0,.3); animation: sheetUp .32s cubic-bezier(.2,.9,.25,1); }
+  #sheetGrid { flex: 1; overflow: auto; align-content: start; }
+  #sheetGrid > .muted { grid-column: 1 / -1; line-height: 1.5; }
+  @keyframes sheetUp { from { transform: translateY(40px); opacity: 0; } }
+  @keyframes fadeIn { from { opacity: 0; } }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .sheet-head b { font-size: 15px; }
+  #sheetGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; }
+  .win { border: 0; padding: 8px; border-radius: 12px; background: var(--fill); cursor: pointer; text-align: center; transition: transform .1s ease-out, box-shadow .15s; }
+  .win:hover { box-shadow: 0 0 0 2px var(--accent); }
+  .win:active { transform: scale(.97); }
+  .win .th { height: 86px; border-radius: 8px; background: var(--stage) center/contain no-repeat; margin-bottom: 6px; }
+  .win span { display: block; font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .win.cur { box-shadow: 0 0 0 2px var(--green); }
+  .win.own { opacity: .45; }
+  .picking { animation: pickPulse 1.4s ease-in-out infinite; }
+  @keyframes pickPulse { 50% { box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 35%, transparent); } }
+  body { margin: 0; font: 13px/1.38 -apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, system-ui, sans-serif; color: var(--label);
+    background: var(--bg); -webkit-font-smoothing: antialiased; letter-spacing: -0.006em; }
+  button { font: inherit; color: inherit; }
+
+  /* header: translucent material, content scrolls under it */
+  header { position: sticky; top: 0; z-index: 5; padding: 12px 14px 10px; background: color-mix(in srgb, var(--bg) 78%, transparent);
+    backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
+  .title { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+  .title h1 { margin: 0; font-size: 20px; line-height: 1.1; font-weight: 700; letter-spacing: -0.022em; }
+  .title span { color: var(--label2); font-size: 12px; }
+  .seg { position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 2px; border-radius: 9px; background: var(--fill); }
+  .seg .thumb { position: absolute; top: 2px; bottom: 2px; left: 2px; width: calc(50% - 2px); border-radius: 7px; background: var(--surface-solid);
+    box-shadow: 0 3px 8px rgba(0,0,0,.12), 0 1px 1px rgba(0,0,0,.04); transition: transform .32s cubic-bezier(.2,.9,.25,1); }
+  .seg button { position: relative; z-index: 1; border: 0; background: none; padding: 6px 0; font-weight: 600; font-size: 13px; cursor: pointer; }
+
+  main { padding: 4px 14px 18px; }
+  section { display: none; animation: enter .28s cubic-bezier(.2,.9,.25,1); }
+  section.on { display: block; }
+  @keyframes enter { from { opacity: 0; transform: translateY(4px); } }
+
+  .eyebrow { margin: 16px 4px 6px; color: var(--label2); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  .card { background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .row { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 12px; }
+  .row + .row { border-top: .5px solid var(--sep); }
+  .row .grow { flex: 1; min-width: 0; }
+  .muted { color: var(--label2); }
+  .small { font-size: 12px; }
+  .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chip { flex: none; padding: 2px 7px; border-radius: 6px; background: var(--fill); color: var(--label2); font-size: 11px; font-weight: 600; }
+
+  /* iOS switch */
+  .switch { position: relative; flex: none; width: 42px; height: 26px; border-radius: 13px; background: var(--fill-strong); border: 0; cursor: pointer;
+    transition: background .25s; }
+  .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 22px; height: 22px; border-radius: 50%; background: #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,.2); transition: transform .3s cubic-bezier(.3,1.3,.5,1); }
+  .switch[aria-checked="true"] { background: var(--green); }
+  .switch[aria-checked="true"]::after { transform: translateX(16px); }
+
+  .primary { width: 100%; margin-top: 12px; min-height: 44px; border: 0; border-radius: 12px; background: var(--accent); color: #fff;
+    font-size: 15px; font-weight: 600; letter-spacing: -0.01em; cursor: pointer; transition: transform .1s ease-out, background .15s, opacity .2s; }
+  .primary:active:not(:disabled) { transform: scale(.97); background: var(--accent-press); }
+  .primary:disabled { opacity: .35; cursor: default; }
+  .plain { border: 0; border-radius: 8px; padding: 6px 10px; background: var(--fill); font-weight: 600; font-size: 12px; cursor: pointer;
+    transition: transform .1s ease-out, background .15s; }
+  .plain:active { transform: scale(.96); background: var(--fill-strong); }
+  .plain.on { background: var(--accent); color: #fff; }
+
+  .codebox { margin-top: 12px; padding: 16px 12px 12px; text-align: center; }
+  .code { font: 700 34px/1 "SF Mono", ui-monospace, Menlo, monospace; letter-spacing: .18em; padding-left: .18em; user-select: all; }
+  .codebox.in { animation: materialize .45s cubic-bezier(.2,.9,.25,1); }
+  @keyframes materialize { from { opacity: 0; transform: scale(.94); filter: blur(6px); } }
+  .status { margin: 10px 4px 0; min-height: 17px; color: var(--label2); font-size: 12px; }
+  .status.err { color: var(--red); }
+  .notes { margin-top: 10px; padding: 10px 12px; max-height: 140px; overflow: auto; font-size: 12px; color: var(--label2); }
+  .notes b { color: var(--label); }
+
+  input.field { width: 100%; padding: 8px 10px; border: 0; border-radius: 8px; background: var(--fill); color: var(--label); font: inherit; outline: none;
+    transition: box-shadow .15s; }
+  input.field:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 35%, transparent); }
+  details summary { list-style: none; cursor: pointer; }
+  details summary::-webkit-details-marker { display: none; }
+
+  /* preview */
+  .stage { position: relative; height: 190px; display: grid; place-items: center; background: var(--stage); overflow: hidden;
+    background-image: radial-gradient(circle, var(--fill-strong) 1px, transparent 1px); background-size: 14px 14px; }
+  .stage.demo { box-shadow: inset 0 0 0 2px var(--accent); }
+  .stage .empty { color: var(--label3); font-size: 12px; }
+  #pv { position: relative; cursor: pointer; user-select: none; -webkit-user-drag: none; will-change: transform, opacity, filter; touch-action: none; }
+  #pv img { display: block; max-width: 150px; max-height: 150px; pointer-events: none; }
+  .fx { position: absolute; pointer-events: none; border-radius: 50%; }
+  .pvbar { display: flex; gap: 6px; align-items: center; padding: 8px 10px; border-top: .5px solid var(--sep); }
+
+  .pvwrap { position: sticky; top: 92px; z-index: 4; padding-top: 12px; background: var(--bg); }
+  .sec-head { display: flex; align-items: baseline; gap: 8px; padding: 10px 12px 0; }
+  .sec-head b { font-size: 14px; letter-spacing: -0.01em; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 12px; }
+  .chips .plain { padding: 7px 11px; }
+  .chips .plain:disabled { opacity: .35; cursor: default; }
+  .sec-settings { border-top: .5px solid var(--sep); }
+  .advanced summary { margin-top: 18px; }
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 12px; }
+  .setting { display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 4px 12px; }
+  .setting + .setting { border-top: .5px solid var(--sep); }
+  .setting span { flex: 1; color: var(--label2); }
+  .setting input[type=number], .setting input[type=text] { width: 92px; padding: 5px 8px; border: 0; border-radius: 7px; background: var(--fill);
+    color: var(--label); font: inherit; text-align: right; outline: none; }
+  .setting select { padding: 5px 8px; border: 0; border-radius: 7px; background: var(--fill); color: var(--label); font: inherit; outline: none; }
+  .issue { display: flex; gap: 8px; align-items: flex-start; padding: 6px 0; border-top: .5px solid var(--sep); }
+  .issue:first-child { border-top: 0; }
+  .issue i { flex: none; width: 8px; height: 8px; border-radius: 4px; margin-top: 5px; }
+  .issue div { flex: 1; } .issue b { color: var(--label); font-weight: 600; }
+  .preset-chip { display: inline-flex; align-items: center; gap: 4px; }
+  .preset-chip span { opacity: .6; padding-left: 4px; cursor: pointer; }
+  .icon-thumb { width: 28px; height: 28px; border-radius: 6px; background: var(--fill) center/contain no-repeat; flex: none; }
+  .picking { margin: 12px 0 0; padding: 10px 12px; border-radius: 12px; background: var(--accent); color: #fff; display: flex; align-items: center; gap: 8px; }
+  .picking span { flex: 1; font-weight: 600; }
+  .picking button { border: 0; border-radius: 8px; padding: 5px 10px; background: rgba(255,255,255,.25); color: #fff; font-weight: 600; cursor: pointer; }
+  .setting input[type=color] { width: 44px; height: 24px; padding: 0; border: 0; border-radius: 6px; background: none; cursor: pointer; }
+
+  .tag { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 9px 12px; cursor: pointer; transition: background .12s; }
+  .tag + .tag { border-top: .5px solid var(--sep); }
+  .tag:active { background: var(--fill); }
+  .tag b { font: 600 12px "SF Mono", ui-monospace, Menlo, monospace; }
+  .tag p { margin: 2px 0 0; color: var(--label2); font-size: 12px; }
+  .tag.has b { color: var(--accent); }
+  .tag.has b::after { content: "  ✓"; font-family: inherit; }
+
+  /* thin overlay-style scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--fill-strong); border-radius: 10px; border: 3px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background-color: var(--label3); }
+  ::-webkit-scrollbar-corner { background: transparent; }
+  html { scrollbar-width: thin; scrollbar-color: var(--fill-strong) transparent; }
+
+  /* resize grip */
+  #grip { position: fixed; right: 2px; bottom: 2px; width: 16px; height: 16px; cursor: nwse-resize; z-index: 20; opacity: .55;
+    background: linear-gradient(135deg, transparent 0 55%, var(--label3) 55% 62%, transparent 62% 72%, var(--label3) 72% 79%, transparent 79%); }
+  #grip:hover { opacity: 1; }
+
+  /* responsive preview */
+  .stage { height: clamp(170px, 34vh, 420px); }
+  #pv img { max-width: min(60vw, 320px); max-height: calc(clamp(170px, 34vh, 420px) - 40px); }
+
+  /* wide window: preview stays on the left, controls scroll on the right */
+  @media (min-width: 640px) {
+    main { max-width: 1100px; margin: 0 auto; }
+    #tags.on { display: grid; grid-template-columns: minmax(260px, 1fr) minmax(300px, 1.1fr); gap: 0 18px; align-items: start; }
+    #tags .pvwrap { position: sticky; top: 92px; }
+    #tags .stage { height: clamp(220px, 60vh, 560px); }
+    #tags #pv img { max-width: min(36vw, 420px); max-height: calc(clamp(220px, 60vh, 560px) - 60px); }
+    #convert.on { max-width: 520px; margin: 0 auto; }
+  }
+  @media (prefers-reduced-motion: reduce) { *, *::after { transition: none !important; animation: none !important; } }
+</style>
+
+<header>
+  <div class="title"><h1>FigBridge</h1><span>Figma → Roblox</span></div>
+  <div class="seg" role="tablist">
+    <div class="thumb" id="segThumb"></div>
+    <button data-tab="convert" role="tab">Convert</button>
+    <button data-tab="tags" role="tab">Interact</button>
+  </div>
+</header>
+
+<main>
+  <section id="convert" class="on">
+    <div class="eyebrow">Selection</div>
+    <div class="card">
+      <div class="row"><div class="grow ellipsis" id="selConvert">Nothing selected</div><span class="chip" id="selType" hidden></span></div>
+      <div class="row">
+        <div class="grow"><div>Exact look</div><div class="muted small">Decorations without text become one image</div></div>
+        <button class="switch" id="exact" role="switch" aria-checked="true"></button>
+      </div>
+    </div>
+    <button class="primary" id="exportBtn" disabled>Select a layer</button>
+    <div class="card" style="margin-top:12px">
+      <div class="row">
+        <div class="grow"><div>Live sync</div><div class="muted small" id="liveHint">Edits land in Studio by themselves. Keep this window open.</div></div>
+        <button class="switch" id="liveSwitch" role="switch" aria-checked="false"></button>
+      </div>
+    </div>
+
+    <button class="plain" id="checkBtn" style="margin-top:10px;width:100%;padding:9px">Check before converting</button>
+    <div class="card notes" id="checkList" hidden></div>
+    <div class="card codebox" id="codeCard" hidden>
+      <div class="code" id="code"></div>
+      <button class="plain" id="copyBtn" style="margin-top:12px">Copy code</button>
+    </div>
+    <div class="status" id="status"></div>
+    <div class="card notes" id="warnings" hidden></div>
+
+    <div class="eyebrow">Studio</div>
+    <div class="card">
+      <div class="row"><div class="grow muted small">In Roblox Studio open <b style="color:var(--label)">Plugins → FigBridge</b>, paste the code and press Import.</div></div>
+      <details class="row" style="display:block">
+        <summary class="muted small">Server address</summary>
+        <input class="field" id="server" value="http://localhost:7777" style="margin-top:8px">
+      </details>
+    </div>
+  </section>
+
+  <section id="tags">
+    <div class="pvwrap">
+      <div class="card">
+        <div class="stage" id="stage"><div class="empty" id="pvEmpty">Select one layer to preview</div></div>
+        <div class="pvbar">
+          <span class="grow muted small ellipsis" id="pvHint">Hover and click the layer</span>
+          <button class="plain" id="replayBtn">Appear</button>
+          <button class="plain" id="exitBtn">Exit</button>
+          <button class="plain" id="autoBtn" title="Plays appear, hover, click and exit on a loop">Auto</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="controls">
+    <div class="picking" id="picking" hidden><span>Now click the layer to use as the icon</span><button id="pickCancel">Cancel</button></div>
+    <div class="eyebrow">Effects</div>
+    <div class="card"><div class="chips">
+      <button class="plain" id="copyFx">Copy effects</button>
+      <button class="plain" id="pasteFx" disabled>Paste to selection</button>
+    </div>
+    <div class="setting" style="border-top:.5px solid var(--sep)"><input type="text" id="presetName" placeholder="Name, e.g. My button" style="flex:1;text-align:left;width:auto"><button class="plain" id="savePreset">Save as preset</button></div><div class="chips" id="myPresets" style="padding-top:0"></div></div>
+    <div id="sections"></div>
+
+    <div class="eyebrow">Sound</div>
+    <div class="card">
+      <label class="setting"><span>Hover sound id</span><input type="text" id="sndHover" placeholder="e.g. 6895079853"></label>
+      <label class="setting"><span>Click sound id</span><input type="text" id="sndClick" placeholder="e.g. 6895079853"></label>
+      <label class="setting"><span>Volume</span><input type="number" id="sndVol" step="0.1" min="0" max="1" value="0.5"></label>
+    </div>
+
+    <div id="settings"></div>
+
+    <details class="advanced">
+      <summary class="eyebrow">All tags (advanced)</summary>
+      <div class="card" style="padding:10px 12px;display:grid;gap:8px">
+        <input class="field" id="search" placeholder="Search tags">
+        <input class="field" id="arg" placeholder="Name for tags with “:”  (e.g. Shop)">
+        <button class="plain" id="clearBtn" style="justify-self:start">Clear all tags</button>
+      </div>
+      <div id="tagList"></div>
+    </details>
+    </div>
+  </section>
+</main>
+
+<div id="grip" title="Drag to resize"></div>
+<div id="sheetScrim" hidden>
+  <div id="sheet" role="dialog" aria-label="Choose the window to open">
+    <div class="sheet-head"><b>Choose the window to open</b><button class="plain" id="sheetClose">Cancel</button></div>
+    <div id="sheetGrid"><div class="muted small">Loading windows…</div></div>
+  </div>
+</div>
+<script>
+const $ = (id) => document.getElementById(id);
+// drag the corner to resize the plugin window (Figma remembers the size)
+(() => {
+  const grip = document.getElementById("grip");
+  let start = null, raf = 0, next = null;
+  grip.onpointerdown = (e) => { grip.setPointerCapture(e.pointerId); start = { x: e.screenX, y: e.screenY, w: innerWidth, h: innerHeight }; };
+  grip.onpointermove = (e) => {
+    if (!start) return;
+    next = { w: Math.round(start.w + e.screenX - start.x), h: Math.round(start.h + e.screenY - start.y) };
+    if (!raf) raf = requestAnimationFrame(() => { raf = 0; parent.postMessage({ pluginMessage: { type: "resize", w: next.w, h: next.h } }, "*"); });
+  };
+  grip.onpointerup = () => { if (start && next) parent.postMessage({ pluginMessage: { type: "resize", w: next.w, h: next.h, save: true } }, "*"); start = null; };
+})();
+let TAGS = [], DEFAULTS = {}, PRESETS = [], selection = [];
+
+// ---------- chrome ----------
+if (document.documentElement.classList.contains("figma-dark")) document.body.classList.add("figma-dark");
+document.querySelectorAll(".seg button").forEach((b, i) => b.onclick = () => {
+  $("segThumb").style.transform = "translateX(" + (i * 100) + "%)";
+  document.querySelectorAll("section").forEach((s) => s.classList.toggle("on", s.id === b.dataset.tab));
+  if (b.dataset.tab === "tags") preview.replay();
+});
+// ---------- pre-export check
+$("checkBtn").onclick = () => { $("checkBtn").textContent = "Checking…"; post({ type: "check" }); };
+function renderIssues(issues) {
+  $("checkBtn").textContent = "Check before converting";
+  const box = $("checkList");
+  box.hidden = false;
+  if (!issues) { box.textContent = "Select one frame to check."; return; }
+  if (!issues.length) { box.innerHTML = "<b>All good.</b> Everything should look the same in Roblox."; return; }
+  const color = { error: "var(--red)", warn: "#ff9f0a", info: "var(--label3)" };
+  box.innerHTML = "";
+  for (const it of issues.sort((a, b) => ["error", "warn", "info"].indexOf(a.level) - ["error", "warn", "info"].indexOf(b.level))) {
+    const row = document.createElement("div");
+    row.className = "issue";
+    row.innerHTML = "<i></i><div><b></b><br><span></span></div>";
+    row.querySelector("i").style.background = color[it.level];
+    row.querySelector("b").textContent = it.name;
+    row.querySelector("span").textContent = it.msg;
+    const go = document.createElement("button");
+    go.className = "plain"; go.textContent = "Show";
+    go.onclick = () => post({ type: "focusNode", id: it.id });
+    row.appendChild(go);
+    box.appendChild(row);
+  }
+}
+
+// ---------- copy / paste effects and saved presets
+let fxClip = null, myPresets = [];
+$("copyFx").onclick = () => post({ type: "copyEffects", purpose: "clip" });
+$("pasteFx").onclick = () => fxClip && post({ type: "applyEffects", effects: fxClip });
+$("savePreset").onclick = () => {
+  const name = $("presetName").value.trim() || "Preset " + (myPresets.length + 1);
+  $("presetName").value = "";
+  post({ type: "copyEffects", purpose: "preset", name: name.slice(0, 24) });
+};
+function renderMyPresets() {
+  const box = $("myPresets");
+  box.innerHTML = "";
+  myPresets.forEach((p, i) => {
+    const b = document.createElement("button");
+    b.className = "plain preset-chip";
+    b.title = Object.keys(p.effects.tags).map((t) => "_" + t).join(" ");
+    b.innerHTML = "<em></em><span title='Delete'>×</span>";
+    b.querySelector("em").textContent = p.name;
+    b.querySelector("em").style.fontStyle = "normal";
+    b.onclick = (e) => {
+      if (e.target.tagName === "SPAN") { myPresets.splice(i, 1); post({ type: "savePresets", list: myPresets }); renderMyPresets(); return; }
+      post({ type: "applyEffects", effects: p.effects });
+    };
+    box.appendChild(b);
+  });
+}
+
+$("liveSwitch").onclick = () => {
+  const on = $("liveSwitch").getAttribute("aria-checked") !== "true";
+  post(on ? { type: "liveStart", exact: $("exact").getAttribute("aria-checked") === "true" } : { type: "liveStop" });
+};
+$("exact").onclick = () => $("exact").setAttribute("aria-checked", $("exact").getAttribute("aria-checked") === "true" ? "false" : "true");
+
+function post(msg) { parent.postMessage({ pluginMessage: msg }, "*"); }
+function setStatus(text, isErr) { $("status").textContent = text; $("status").className = "status" + (isErr ? " err" : ""); }
+
+$("server").onchange = () => post({ type: "saveServer", server: $("server").value.trim().replace(/\/$/, "") });
+$("exportBtn").onclick = () => {
+  $("exportBtn").disabled = true;
+  $("codeCard").hidden = true; $("warnings").hidden = true;
+  setStatus("Exporting…");
+  post({ type: "export", exact: $("exact").getAttribute("aria-checked") === "true" });
+};
+$("copyBtn").onclick = () => {
+  const ta = document.createElement("textarea");
+  ta.value = $("code").textContent; document.body.appendChild(ta); ta.select();
+  document.execCommand("copy"); ta.remove();
+  $("copyBtn").textContent = "Copied";
+  setTimeout(() => { $("copyBtn").textContent = "Copy code"; }, 1400);
+};
+$("clearBtn").onclick = () => post({ type: "clearTags" });
+$("search").oninput = renderTags;
+$("replayBtn").onclick = () => preview.replay();
+$("exitBtn").onclick = () => preview.exit();
+$("autoBtn").onclick = () => {
+  const on = !$("autoBtn").classList.contains("on");
+  $("autoBtn").classList.toggle("on", on);
+  preview.auto(on);
+};
+let SECTIONS = [];
+
+function renderSelection() {
+  const one = selection.length === 1;
+  $("selConvert").textContent = selection.length ? selection.map((s) => s.name).join(", ") : "Nothing selected";
+  $("selType").hidden = !one;
+  if (one) $("selType").textContent = selection[0].type.toLowerCase();
+  $("exportBtn").disabled = !one;
+  $("exportBtn").textContent = one ? "Convert" : selection.length ? "Select only one layer" : "Select a layer";
+  renderSections();
+  renderSound();
+  renderSettings();
+  renderTags();
+  preview.configure();
+}
+
+function settingsOf(key) {
+  const saved = (selection[0] && selection[0].settings && selection[0].settings[key]) || {};
+  return Object.assign({}, DEFAULTS[key] || {}, saved);
+}
+
+// One row per setting of a tag; values are saved on the layer and exported with the design.
+const OPTIONS = {
+  Shape: ["Star", "Plus", "Circle", "Diamond"],
+  Trigger: ["Always", "Hover"],
+  Mode: ["Rotate", "Move"],
+  Style: ["Smooth", "Bouncy", "Elastic", "Snappy", "Linear"],
+};
+let pickFor = null; // { targetId, key } while waiting for the icon layer
+$("pickCancel").onclick = () => { pickFor = null; $("picking").hidden = true; renderSections(); };
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (!$("sheetScrim").hidden) closeWindowSheet();
+  else if (pickFor) $("pickCancel").onclick();
+});
+
+function iconRow(key, card) {
+  const sel = selection[0];
+  const row = document.createElement("div");
+  row.className = "setting";
+  const name = document.createElement("span");
+  name.textContent = "Icon";
+  const thumb = document.createElement("div");
+  thumb.className = "icon-thumb";
+  const b64 = (sel.icons || {})[key];
+  if (b64) thumb.style.backgroundImage = "url(data:image/png;base64," + b64 + ")";
+  const pick = document.createElement("button");
+  pick.className = "plain";
+  pick.textContent = b64 ? "Change…" : "Pick icon…";
+  pick.onclick = () => {
+    pickFor = { targetId: sel.id, key };
+    $("picking").hidden = false;
+    $("picking").querySelector("span").textContent = "Now click the layer to use as the icon";
+  };
+  row.append(name, thumb, pick);
+  if (b64) {
+    const clear = document.createElement("button");
+    clear.className = "plain";
+    clear.textContent = "Remove";
+    clear.onclick = () => post({ type: "clearIcon", key });
+    row.appendChild(clear);
+  }
+  card.appendChild(row);
+}
+
+function settingRows(key, card) {
+  const sel = selection[0];
+  const defs = DEFAULTS[key] || {};
+  const saved = (sel.settings || {})[key] || {};
+  for (const [field, def] of Object.entries(defs)) {
+    if (field === "Icon") { iconRow(key, card); continue; }
+    const row = document.createElement("label");
+    row.className = "setting";
+    const name = document.createElement("span");
+    name.textContent = field.replace(/([a-z])([A-Z])/g, "$1 $2");
+    const input = document.createElement("input");
+    const value = saved[field] !== undefined ? saved[field] : def;
+    let toggle = null, select = null;
+    if (OPTIONS[field]) {
+      select = document.createElement("select");
+      for (const o of OPTIONS[field]) { const op = document.createElement("option"); op.value = op.textContent = o; select.appendChild(op); }
+      select.value = value;
+    } else if (typeof def === "boolean") {
+      toggle = document.createElement("button");
+      toggle.className = "switch";
+      toggle.setAttribute("aria-checked", String(value));
+    } else if (typeof def === "number") { input.type = "number"; input.step = "any"; input.value = value; }
+    else if (/^#[0-9a-f]{6}$/i.test(def)) { input.type = "color"; input.value = value; }
+    else { input.type = "text"; input.value = value; }
+    // local update so the preview reacts at once; persist on the layer only when committed
+    const local = (v) => {
+      if (typeof v === "number" && !isFinite(v)) return false;
+      sel.settings = sel.settings || {};
+      sel.settings[key] = Object.assign({}, sel.settings[key], { [field]: v });
+      if (v === def) delete sel.settings[key][field];
+      return true;
+    };
+    const commit = (v) => { if (local(v)) post({ type: "setSetting", key, field, value: v === def ? null : v }); };
+    if (select) {
+      select.onchange = () => commit(select.value);
+      row.append(name, select);
+    } else if (toggle) {
+      toggle.onclick = (e) => { e.preventDefault(); const v = toggle.getAttribute("aria-checked") !== "true"; toggle.setAttribute("aria-checked", String(v)); commit(v); };
+      row.append(name, toggle);
+    } else {
+      input.oninput = () => local(input.type === "number" ? Number(input.value) : input.value);
+      input.onchange = () => commit(input.type === "number" ? Number(input.value) : input.value);
+      row.append(name, input);
+    }
+    card.appendChild(row);
+  }
+}
+
+let demoTimer = null;
+let pagePanels = []; // _panel layer names on the current page
+let sheetFor = null;
+function openWindowSheet(sel) {
+  if (!sel) return;
+  sheetFor = sel;
+  $("sheetGrid").innerHTML = '<div class="muted small">Loading windows…</div>';
+  $("sheetScrim").hidden = false;
+  post({ type: "listWindows", targetId: sel.id });
+}
+function closeWindowSheet() { $("sheetScrim").hidden = true; sheetFor = null; }
+function renderWindows(list, info) {
+  const grid = $("sheetGrid");
+  grid.innerHTML = "";
+  if (!list.length) {
+    const msg = document.createElement("div");
+    msg.className = "muted small";
+    msg.textContent = "No windows found. " + (info || "") + ". Select your Shop and press Ctrl+Alt+G to make it a frame.";
+    grid.appendChild(msg);
+    return;
+  }
+  for (const w of list) {
+    const b = document.createElement("button");
+    b.className = "win" + (w.own ? " own" : "") + (sheetFor && sheetFor.link && sheetFor.link.id === w.id ? " cur" : "");
+    b.title = w.own ? "This is the window the button is in" : "Open " + w.name;
+    const th = document.createElement("div");
+    th.className = "th";
+    if (w.bytes) th.style.backgroundImage = "url(" + URL.createObjectURL(new Blob([w.bytes], { type: "image/png" })) + ")";
+    const name = document.createElement("span");
+    name.textContent = w.name;
+    b.append(th, name);
+    b.onclick = () => {
+      if (!sheetFor) return;
+      post({ type: "setLink", targetId: sheetFor.id, destId: w.id, action: "open" });
+      closeWindowSheet();
+    };
+    grid.appendChild(b);
+  }
+}
+$("sheetClose").onclick = closeWindowSheet;
+$("sheetScrim").onclick = (e) => { if (e.target === $("sheetScrim")) closeWindowSheet(); };
+// Event pickers: each section holds at most one effect.
+function renderSections() {
+  clearTimeout(demoTimer);
+  preview.endDemo(true);
+  const box = $("sections");
+  box.innerHTML = "";
+  const sel = selection.length === 1 ? selection[0] : null;
+  const tags = sel ? (sel.tags || {}) : {};
+  for (const sec of SECTIONS) {
+    const keys = sec.options.map((o) => o[0]);
+    const active = keys.find((k) => tags[k] !== undefined) || null;
+    const disabled = !sel || (sec.textOnly && sel.type !== "TEXT");
+    const head = document.createElement("div");
+    head.className = "eyebrow";
+    head.textContent = sec.title;
+    box.appendChild(head);
+    const card = document.createElement("div");
+    card.className = "card";
+    const hint = document.createElement("div");
+    hint.className = "sec-head muted small";
+    hint.textContent = disabled && sel && sec.textOnly ? "Select a text layer to use these" : sec.hint;
+    card.appendChild(hint);
+    const chips = document.createElement("div");
+    chips.className = "chips";
+    let nameInput = null;
+    const choose = (key) => {
+      let arg = null;
+      if (key && sec.id === "action" && key !== "close") {
+        arg = (nameInput.value || "").trim().replace(/_/g, " ").replace(/\s+/g, "");
+        if (!arg) { nameInput.hidden = false; nameInput.focus(); nameInput.placeholder = "Pick or type a panel first"; return; }
+      }
+      post({ type: "replaceTags", remove: keys, add: key ? [[key, arg]] : [] });
+    };
+    for (const [key, label] of [[null, "None"]].concat(sec.options)) {
+      const b = document.createElement("button");
+      b.className = "plain" + (key === active ? " on" : "");
+      b.textContent = label;
+      b.disabled = disabled;
+      b.onclick = () => { clearTimeout(demoTimer); preview.endDemo(); choose(key); };
+      if (key && sec.id !== "action") {
+        b.onpointerenter = () => {
+          clearTimeout(demoTimer);
+          demoTimer = setTimeout(() => preview.demo(key, sec.id, keys), 800);
+        };
+        b.onpointerleave = () => { clearTimeout(demoTimer); preview.endDemo(); };
+      }
+      chips.appendChild(b);
+    }
+    card.appendChild(chips);
+    if (sec.id === "action") {
+      // pick the window straight on the canvas
+      const linkRow = document.createElement("div");
+      linkRow.className = "setting sec-settings";
+      const ln = document.createElement("span");
+      ln.textContent = sel && sel.link ? "Opens “" + sel.link.name + "”" : "Opens";
+      const pickBtn = document.createElement("button");
+      pickBtn.className = "plain on";
+      pickBtn.textContent = sel && sel.link ? "Change…" : "Pick…";
+      pickBtn.disabled = disabled;
+      pickBtn.onclick = () => openWindowSheet(sel);
+      linkRow.append(ln, pickBtn);
+      if (sel && sel.link) {
+        const clr = document.createElement("button");
+        clr.className = "plain";
+        clr.textContent = "Remove";
+        clr.onclick = () => post({ type: "clearLink" });
+        linkRow.appendChild(clr);
+      }
+      card.appendChild(linkRow);
+      const row = document.createElement("label");
+      row.className = "setting sec-settings";
+      const n = document.createElement("span");
+      n.textContent = "Panel";
+      const current = active && typeof tags[active] === "string" ? tags[active] : "";
+      // pick from the page's _panel layers; "Other…" types a name (a panel in another file/import)
+      const pick = document.createElement("select");
+      const options = pagePanels.slice();
+      if (current && !options.includes(current)) options.push(current);
+      const blank = document.createElement("option");
+      blank.value = ""; blank.textContent = options.length ? "Choose a panel…" : "No _panel layers on this page";
+      pick.appendChild(blank);
+      for (const name of options) { const o = document.createElement("option"); o.value = o.textContent = name; pick.appendChild(o); }
+      const other = document.createElement("option");
+      other.value = "__other"; other.textContent = "Other…";
+      pick.appendChild(other);
+      pick.value = current || "";
+      pick.disabled = disabled;
+      nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.placeholder = "Panel name, e.g. Shop";
+      nameInput.value = current;
+      nameInput.disabled = disabled;
+      nameInput.style.cssText = "width:120px;text-align:left";
+      nameInput.hidden = true;
+      pick.onchange = () => {
+        if (pick.value === "__other") { nameInput.hidden = false; nameInput.value = ""; nameInput.focus(); return; }
+        nameInput.hidden = true;
+        nameInput.value = pick.value;
+        // re-apply the chosen action with the new panel, or default to Open
+        if (pick.value) choose(active && active !== "close" ? active : "open");
+      };
+      nameInput.onchange = () => { if (nameInput.value.trim()) choose(active && active !== "close" ? active : "open"); };
+      row.append(n, pick, nameInput);
+      card.appendChild(row);
+      const tip = document.createElement("div");
+      tip.className = "setting muted small";
+      tip.textContent = "Lists this page's frames and _panel layers. Or connect the button in Figma's Prototype tab (On click → Navigate to).";
+      card.appendChild(tip);
+    }
+    if (active && DEFAULTS[active]) {
+      const wrap = document.createElement("div");
+      wrap.className = "sec-settings";
+      settingRows(active, wrap);
+      card.appendChild(wrap);
+    }
+    box.appendChild(card);
+  }
+}
+
+function renderSound() {
+  const sel = selection.length === 1 ? selection[0] : null;
+  const s = sel ? settingsOf("sound") : (DEFAULTS.sound || {});
+  for (const id of ["sndHover", "sndClick", "sndVol"]) $(id).disabled = !sel;
+  $("sndHover").value = s.Hover || "";
+  $("sndClick").value = s.Click || "";
+  $("sndVol").value = s.Volume == null ? 0.5 : s.Volume;
+}
+function commitSound(field, value) {
+  const sel = selection[0];
+  if (!sel) return;
+  const def = (DEFAULTS.sound || {})[field];
+  post({ type: "setSetting", key: "sound", field, value: value === def ? null : value });
+  const has = $("sndHover").value.trim() || $("sndClick").value.trim();
+  if (has && (sel.tags || {}).sound === undefined) post({ type: "replaceTags", remove: ["sound"], add: [["sound", null]] });
+  if (!has && (sel.tags || {}).sound !== undefined) post({ type: "replaceTags", remove: ["sound"], add: [] });
+}
+$("sndHover").onchange = () => commitSound("Hover", $("sndHover").value.replace(/\D/g, ""));
+$("sndClick").onchange = () => commitSound("Click", $("sndClick").value.replace(/\D/g, ""));
+$("sndVol").onchange = () => commitSound("Volume", Math.max(0, Math.min(1, Number($("sndVol").value) || 0)));
+
+// Settings for tags that no picker covers (added from the advanced list).
+function renderSettings() {
+  const box = $("settings");
+  box.innerHTML = "";
+  if (selection.length !== 1) return;
+  const covered = new Set(["sound"]);
+  for (const sec of SECTIONS) for (const o of sec.options) covered.add(o[0]);
+  for (const key of Object.keys(selection[0].tags || {})) {
+    if (covered.has(key) || !DEFAULTS[key]) continue;
+    const head = document.createElement("div");
+    head.className = "eyebrow";
+    head.textContent = "_" + key;
+    box.appendChild(head);
+    const card = document.createElement("div");
+    card.className = "card";
+    settingRows(key, card);
+    box.appendChild(card);
+  }
+}
+
+function renderTags() {
+  const q = $("search").value.trim().toLowerCase();
+  const present = selection.length === 1 ? (selection[0].tags || {}) : {};
+  const list = $("tagList");
+  list.innerHTML = "";
+  let group = null, card = null;
+  for (const [key, hasArg, g, desc] of TAGS) {
+    if (q && !(key.includes(q) || desc.toLowerCase().includes(q) || g.toLowerCase().includes(q))) continue;
+    if (g !== group) {
+      group = g;
+      const h = document.createElement("div"); h.className = "eyebrow"; h.textContent = g; list.appendChild(h);
+      card = document.createElement("div"); card.className = "card"; list.appendChild(card);
+    }
+    const el = document.createElement("button");
+    el.className = "tag" + (present[key] !== undefined ? " has" : "");
+    el.innerHTML = "<b></b><p></p>";
+    el.querySelector("b").textContent = "_" + key + (hasArg ? ":" + (typeof present[key] === "string" ? present[key] : "Name") : "");
+    el.querySelector("p").textContent = desc;
+    el.onclick = () => {
+      const arg = $("arg").value.trim().replace(/[_\s]/g, "");
+      if (hasArg && present[key] === undefined && !arg) { $("arg").focus(); $("arg").placeholder = "Type a name first"; return; }
+      post({ type: "toggleTag", key, arg: hasArg ? arg : null });
+    };
+    card.appendChild(el);
+  }
+}
+
+// ---------- live preview: mirrors the Roblox runtime timings ----------
+const ease = {
+  quad: (t) => 1 - (1 - t) * (1 - t),
+  quadIn: (t) => t * t,
+  quint: (t) => 1 - Math.pow(1 - t, 5),
+  sine: (t) => -(Math.cos(Math.PI * t) - 1) / 2,
+  back: (t) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2); },
+  bounce: (t) => { const n = 7.5625, d = 2.75; if (t < 1 / d) return n * t * t; if (t < 2 / d) return n * (t -= 1.5 / d) * t + .75; if (t < 2.5 / d) return n * (t -= 2.25 / d) * t + .9375; return n * (t -= 2.625 / d) * t + .984375; },
+  elastic: (t) => t === 0 || t === 1 ? t : Math.pow(2, -10 * t) * Math.sin((t * 10 - .75) * (2 * Math.PI / 3)) + 1,
+};
+
+const preview = (() => {
+  // Scene preview: the selected layer plus every tagged layer inside it, each animated like the Roblox runtime.
+  const STYLE = { Smooth: ease.quint, Bouncy: ease.back, Elastic: ease.elastic, Snappy: ease.quad, Linear: (t) => t };
+  let root = null, layers = [];
+  let hover = false, press = false, pointer = null, t0 = performance.now();
+  let demoTags = null, demoLoop = null, autoLoop = null, lastScene = null, urls = [];
+
+  const sel = () => (selection.length === 1 ? selection[0] : null);
+  function newLayer(el, info) {
+    const L = { el, info, tags: info.tags || {}, settings: info.settings || {}, icons: info.icons || {}, live: false,
+      ch: null, tweens: {}, swingStart: -1, revealStart: -1, revealScaled: false, tilt: { x: 0, y: 0 }, accP: 0, accS: 0, gl: null, fl: null };
+    resetCh(L);
+    return L;
+  }
+  function resetCh(L) { L.ch = { s: {}, sx: {}, sy: {}, x: {}, y: {}, r: {}, a: {}, b: {} }; L.tweens = {}; L.swingStart = L.revealStart = -1; }
+  // the root layer reads settings live from the selection, so edits show at once
+  const settingsFor = (L) => (L.live && sel() ? (sel().settings || {}) : L.settings);
+  const iconsFor = (L) => (L.live && sel() ? (sel().icons || {}) : L.icons);
+  const P = (L, tag, key) => { const s = settingsFor(L)[tag]; return s && s[key] !== undefined ? s[key] : (DEFAULTS[tag] || {})[key]; };
+  const has = (L, t) => L.tags[t] !== undefined;
+  const styleEase = (L, tag, fb) => STYLE[P(L, tag, "Style")] || fb;
+  const def = (c) => (c === "x" || c === "y" || c === "r") ? 0 : 1;
+  const get = (L, c, key) => (L.ch[c][key] === undefined ? def(c) : L.ch[c][key]);
+  function anim(L, c, key, to, dur, fn, from) {
+    L.tweens[c + "|" + key] = { c, key, from: from === undefined ? get(L, c, key) : from, to, t0: performance.now(), dur: Math.max(dur, .001) * 1000, fn: fn || ease.quad };
+  }
+  const prod = (o) => Object.values(o).reduce((a, v) => a * v, 1);
+  const sum = (o) => Object.values(o).reduce((a, v) => a + v, 0);
+  const K = () => (root ? root.el.offsetWidth / Math.max(1, root.info.w || 1) : 1); // screen px per design px
+
+  // ---------- hover / press
+  function onState() {
+    for (const L of layers) {
+      if (has(L, "grow")) anim(L, "s", "grow", hover ? P(L, "grow", "Scale") : 1, P(L, "grow", "Time"), styleEase(L, "grow", ease.quint));
+      if (has(L, "press")) anim(L, "s", "press", press ? P(L, "press", "Scale") : 1, press ? P(L, "press", "Time") : P(L, "press", "Time") * 2.5, press ? ease.quad : styleEase(L, "press", ease.back));
+      if (has(L, "smooth")) anim(L, "s", "smooth", press ? P(L, "smooth", "PressScale") : hover ? P(L, "smooth", "HoverScale") : 1, P(L, "smooth", "Time"));
+      if (has(L, "button")) anim(L, "b", "button", 1 - (press ? P(L, "button", "Darken") * 2 : hover ? P(L, "button", "Darken") : 0), P(L, "button", "Time"));
+      if (has(L, "up")) anim(L, "y", "up", hover ? -P(L, "up", "Lift") : 0, P(L, "up", "Time"), styleEase(L, "up", ease.quint));
+      if (has(L, "turn")) anim(L, "r", "turn", hover ? P(L, "turn", "Angle") : 0, P(L, "turn", "Time"));
+      if (has(L, "lean")) anim(L, "r", "lean", hover ? P(L, "lean", "Angle") : 0, P(L, "lean", "Time"), ease.back);
+      if (has(L, "squish")) {
+        if (press) { const q = P(L, "squish", "Squash"); anim(L, "sx", "sq", 1 + (1 - q) * .6, .08); anim(L, "sy", "sq", q, .08); }
+        else { anim(L, "sx", "sq", 1, P(L, "squish", "Time"), ease.elastic); anim(L, "sy", "sq", 1, P(L, "squish", "Time"), ease.elastic); }
+      }
+    }
+  }
+
+  // ---------- particles (same shapes as the runtime)
+  function particle(L, tag, size) {
+    const box = document.createElement("div");
+    const icon = iconsFor(L)[tag];
+    const color = P(L, tag, "Color") || "#ffffff";
+    Object.assign(box.style, { position: "absolute", width: size + "px", height: size + "px", pointerEvents: "none" });
+    if (icon) box.style.background = "url(data:image/png;base64," + icon + ") center/contain no-repeat";
+    else {
+      const shape = P(L, tag, "Shape") || "Circle";
+      if (shape === "Star" || shape === "Plus") {
+        const w = shape === "Star" ? "39%" : "35%";
+        box.innerHTML = '<div style="position:absolute;inset:' + w + ' 0;border-radius:9px;background:' + color + '"></div><div style="position:absolute;inset:0 ' + w + ';border-radius:9px;background:' + color + '"></div>';
+      } else {
+        box.style.background = color;
+        box.style.borderRadius = shape === "Circle" ? "50%" : "15%";
+        if (shape === "Diamond") box.dataset.rot = "45";
+      }
+    }
+    return box;
+  }
+  function sparkle(L) {
+    const k = K(), mn = P(L, "sparkle", "MinSize"), mx = P(L, "sparkle", "MaxSize");
+    const size = (mn + (mx - mn) * Math.random()) * k, life = P(L, "sparkle", "Life") * (.7 + Math.random() * .6);
+    const p = particle(L, "sparkle", size), r0 = Number(p.dataset.rot || 0), dir = Math.random() < .5 ? -1 : 1;
+    Object.assign(p.style, { left: Math.random() * 100 + "%", top: Math.random() * 100 + "%", marginLeft: -size / 2 + "px", marginTop: -size / 2 + "px", zIndex: 5 });
+    L.el.appendChild(p);
+    const start = performance.now();
+    (function step(now) {
+      const q = (now - start) / (life * 1000);
+      if (q >= 1 || !p.isConnected) { p.remove(); return; }
+      const sc = Math.sin(q * Math.PI);
+      p.style.opacity = sc;
+      p.style.transform = "translateY(" + (-P(L, "sparkle", "Rise") * k * q) + "px) rotate(" + (r0 + dir * P(L, "sparkle", "Spin") * q * life) + "deg) scale(" + sc + ")";
+      requestAnimationFrame(step);
+    })(start);
+  }
+  function pixel(L) {
+    const size = P(L, "pixels", "Size") * K();
+    const box = document.createElement("div");
+    Object.assign(box.style, { position: "absolute", left: Math.random() * 100 + "%", top: Math.random() * 100 + "%", width: size + "px", height: size + "px",
+      marginLeft: -size / 2 + "px", marginTop: -size / 2 + "px", pointerEvents: "none", opacity: 0, transition: "opacity .35s", background: P(L, "pixels", "Color") });
+    L.el.appendChild(box);
+    requestAnimationFrame(() => { box.style.opacity = P(L, "pixels", "Opacity"); });
+    setTimeout(() => { box.style.opacity = 0; }, 380);
+    setTimeout(() => box.remove(), 800);
+  }
+  function ripple(L, cx, cy) {
+    const r = L.el.getBoundingClientRect(), size = Math.max(r.width, r.height) * 2.4;
+    const wrap = document.createElement("div");
+    Object.assign(wrap.style, { position: "absolute", inset: 0, overflow: "hidden", borderRadius: "inherit", pointerEvents: "none" });
+    const c = document.createElement("div");
+    Object.assign(c.style, { position: "absolute", left: cx - r.left - size / 2 + "px", top: cy - r.top - size / 2 + "px", width: size + "px", height: size + "px",
+      borderRadius: "50%", background: P(L, "ripple", "Color"), opacity: P(L, "ripple", "Opacity"), transform: "scale(0)",
+      transition: "transform " + P(L, "ripple", "Time") + "s cubic-bezier(.25,.46,.45,.94), opacity " + P(L, "ripple", "Time") + "s" });
+    wrap.appendChild(c); L.el.appendChild(wrap);
+    requestAnimationFrame(() => { c.style.transform = "scale(1)"; c.style.opacity = 0; });
+    setTimeout(() => wrap.remove(), P(L, "ripple", "Time") * 1000 + 50);
+  }
+  function burst(L) {
+    const stage = $("stage"), sr = stage.getBoundingClientRect(), r = L.el.getBoundingClientRect();
+    const cx = r.left - sr.left + r.width / 2, cy = r.top - sr.top + r.height / 2;
+    const n = P(L, "burst", "Count"), size = P(L, "burst", "Size") * K(), life = P(L, "burst", "Life");
+    for (let i = 0; i < n; i++) {
+      const p = particle(L, "burst", size);
+      const r0 = Number(p.dataset.rot || 0), spin = P(L, "burst", "Spin") * life * (Math.random() < .5 ? -1 : 1);
+      Object.assign(p.style, { left: cx - size / 2 + "px", top: cy - size / 2 + "px", zIndex: 0, transform: "rotate(" + r0 + "deg)",
+        transition: "transform " + life + "s cubic-bezier(.25,.46,.45,.94), opacity " + life + "s" });
+      stage.insertBefore(p, stage.firstChild);
+      const ang = (i / n) * Math.PI * 2 + Math.random() * .6, d = P(L, "burst", "Distance") * K() * (.6 + Math.random() * .6);
+      requestAnimationFrame(() => { p.style.transform = "translate(" + Math.cos(ang) * d + "px," + Math.sin(ang) * d + "px) rotate(" + (r0 + spin) + "deg) scale(.3)"; p.style.opacity = 0; });
+      setTimeout(() => p.remove(), life * 1000 + 50);
+    }
+  }
+
+  // ---------- entrances / exits
+  function entrance(L) {
+    const now = performance.now();
+    if (has(L, "pop")) { L.ch.s.pop = P(L, "pop", "From"); L.ch.a.pop = 0; setTimeout(() => { anim(L, "s", "pop", 1, P(L, "pop", "Time"), styleEase(L, "pop", ease.back)); anim(L, "a", "pop", 1, P(L, "pop", "Time") * .5); }, P(L, "pop", "Delay") * 1000); }
+    if (has(L, "fadein")) { L.ch.a.fade = 0; setTimeout(() => anim(L, "a", "fade", 1, P(L, "fadein", "Time")), P(L, "fadein", "Delay") * 1000); }
+    if (has(L, "drop")) { L.ch.y.drop = -P(L, "drop", "Height"); L.ch.a.drop = 0; setTimeout(() => { anim(L, "y", "drop", 0, P(L, "drop", "Time"), ease.bounce); anim(L, "a", "drop", 1, .15); }, P(L, "drop", "Delay") * 1000); }
+    if (has(L, "swing")) { L.ch.a.swing = 0; L.swingStart = now + P(L, "swing", "Delay") * 1000; }
+    if (has(L, "reveal")) { L.ch.s.reveal = P(L, "reveal", "From"); L.ch.a.reveal = 0; L.ch.r.reveal = P(L, "reveal", "Angle"); L.revealStart = now + P(L, "reveal", "Delay") * 1000; L.revealScaled = false; }
+  }
+  function exitLayer(L) {
+    let dur = 0;
+    if (has(L, "popout")) { dur = Math.max(dur, P(L, "popout", "Time")); anim(L, "s", "exit", P(L, "popout", "To"), P(L, "popout", "Time"), ease.quadIn); anim(L, "a", "exit", 0, P(L, "popout", "Time"), ease.quadIn); }
+    if (has(L, "fadeout")) { dur = Math.max(dur, P(L, "fadeout", "Time")); anim(L, "a", "exit", 0, P(L, "fadeout", "Time")); }
+    if (has(L, "dropout")) { dur = Math.max(dur, P(L, "dropout", "Time")); anim(L, "y", "exit", P(L, "dropout", "Distance"), P(L, "dropout", "Time"), ease.quadIn); anim(L, "a", "exit", 0, P(L, "dropout", "Time"), ease.quadIn); }
+    return dur;
+  }
+
+  // ---------- per-frame
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (!root) return;
+    const t = (now - t0) / 1000, k = K();
+    for (const L of layers) {
+      for (const id in L.tweens) {
+        const tw = L.tweens[id];
+        const p = Math.min(1, (now - tw.t0) / tw.dur);
+        L.ch[tw.c][tw.key] = tw.from + (tw.to - tw.from) * tw.fn(p);
+        if (p >= 1) delete L.tweens[id];
+      }
+      const ch = L.ch;
+      if (has(L, "spin")) ch.r.spin = (t * P(L, "spin", "Speed")) % 360;
+      if (has(L, "rays")) { ch.r.rays = (t * P(L, "rays", "Speed")) % 360; ch.s.rays = 1 + P(L, "rays", "Pulse") * Math.sin(t * P(L, "rays", "Rate") * Math.PI * 2); }
+      if (has(L, "pulse")) ch.s.pulse = 1 + P(L, "pulse", "Amount") * Math.sin(t * P(L, "pulse", "Rate") * Math.PI * 2);
+      if (has(L, "float")) { const a = P(L, "float", "Angle") * Math.PI / 180, d = P(L, "float", "Distance") * Math.sin(t * P(L, "float", "Rate") * Math.PI * 2); ch.x.float = Math.sin(a) * d; ch.y.float = -Math.cos(a) * d; }
+      if (has(L, "jelly")) { const j = P(L, "jelly", "Amount") * Math.sin(t * P(L, "jelly", "Rate") * Math.PI * 2); ch.sx.jelly = 1 + j; ch.sy.jelly = 1 - j; }
+      if (has(L, "blink")) { const on = P(L, "blink", "On"), off = P(L, "blink", "Off"), f = P(L, "blink", "Fade"), c = t % (on + off + f * 2); ch.a.blink = c < on ? 1 : c < on + f ? 1 - (c - on) / f : c < on + f + off ? 0 : (c - on - f - off) / f; }
+      if (has(L, "shake")) { const dur = P(L, "shake", "Duration"), c = t % Math.max(P(L, "shake", "Every"), dur + .05); ch.x.shake = c < dur ? P(L, "shake", "Distance") * Math.sin(c * 60) * (1 - c / dur) : 0; }
+      if (has(L, "wiggle")) { const dur = P(L, "wiggle", "Duration"), c = t % Math.max(P(L, "wiggle", "Every"), dur + .05); ch.r.wiggle = c < dur ? P(L, "wiggle", "Angle") * Math.sin(c / dur * Math.PI * 4) * (1 - c / dur) : 0; }
+      if (L.swingStart >= 0 && now >= L.swingStart) {
+        const p = Math.min(1, (now - L.swingStart) / (P(L, "swing", "Time") * 1000));
+        ch.r.swing = P(L, "swing", "Angle") * Math.exp(-4 * p) * Math.cos(p * Math.PI * 5) * (1 - p); ch.a.swing = Math.min(1, p * 5);
+        if (p >= 1) L.swingStart = -1;
+      }
+      if (L.revealStart >= 0 && now >= L.revealStart) {
+        if (!L.revealScaled) { L.revealScaled = true; anim(L, "s", "reveal", 1, P(L, "reveal", "Time") * .6, ease.back); anim(L, "a", "reveal", 1, .2); }
+        const p = Math.min(1, (now - L.revealStart) / (P(L, "reveal", "Time") * 1000));
+        ch.r.reveal = P(L, "reveal", "Angle") * Math.exp(-5 * p) * Math.cos(p * Math.PI * 4);
+        ch.sx.reveal = 1 - .12 * Math.abs(Math.sin(p * Math.PI * 4)) * Math.exp(-4 * p);
+        if (p >= 1) L.revealStart = -1;
+      }
+      // 3D looks are foreshortening, exactly like the Roblox runtime
+      if (has(L, "tilt")) { ch.sx.tilt = Math.cos(P(L, "tilt", "Y") * Math.PI / 180); ch.sy.tilt = Math.cos(P(L, "tilt", "X") * Math.PI / 180); }
+      if (has(L, "tilt3d")) {
+        let tx = 0, ty = 0;
+        if (hover && pointer) {
+          const r = L.el.getBoundingClientRect();
+          tx = Math.max(-1, Math.min(1, (pointer.x - (r.left + r.width / 2)) / (r.width / 2)));
+          ty = Math.max(-1, Math.min(1, (pointer.y - (r.top + r.height / 2)) / (r.height / 2)));
+        }
+        L.tilt.x += (tx - L.tilt.x) * .16; L.tilt.y += (ty - L.tilt.y) * .16;
+        const st = P(L, "tilt3d", "Strength");
+        ch.sx.tilt3d = Math.cos(st * L.tilt.x * Math.PI / 180); ch.sy.tilt3d = Math.cos(st * L.tilt.y * Math.PI / 180);
+        ch.r.tilt3d = L.tilt.x * L.tilt.y * st * .15; ch.x.tilt3d = L.tilt.x * st * P(L, "tilt3d", "Depth"); ch.y.tilt3d = L.tilt.y * st * P(L, "tilt3d", "Depth");
+      }
+      if (has(L, "pixels")) { L.accP += P(L, "pixels", "Rate") / 60; while (L.accP >= 1) { L.accP -= 1; pixel(L); } }
+      if (has(L, "sparkle") && (P(L, "sparkle", "Trigger") !== "Hover" || hover)) {
+        L.accS += P(L, "sparkle", "Count") / Math.max(.1, P(L, "sparkle", "Life")) / 60;
+        while (L.accS >= 1) { L.accS -= 1; sparkle(L); }
+      }
+      const s = prod(ch.s);
+      L.el.style.transform = "translate(" + sum(ch.x) * k + "px," + sum(ch.y) * k + "px) rotate(" + sum(ch.r) + "deg) scale(" + s * prod(ch.sx) + "," + s * prod(ch.sy) + ")";
+      L.el.style.opacity = prod(ch.a);
+      let filter = "brightness(" + prod(ch.b) + ")";
+      if (has(L, "glow")) filter += " drop-shadow(0 0 " + (P(L, "glow", "Size") * k * (.7 + .3 * (.5 + .5 * Math.sin(t * P(L, "glow", "Rate") * Math.PI * 2)))) + "px " + P(L, "glow", "Color") + ")";
+      L.el.style.filter = filter;
+      if (has(L, "type")) {
+        const cps = Math.max(1, P(L, "type", "Speed")), total = 12 / cps, pause = P(L, "type", "Loop") ? P(L, "type", "Pause") : 1e9;
+        const c = Math.max(0, t - P(L, "type", "Delay")) % (total + pause);
+        L.el.style.clipPath = "inset(0 " + (100 - Math.min(1, c / total) * 100) + "% 0 0)";
+      } else L.el.style.clipPath = "";
+      if (L.fl) {
+        const move = P(L, "flow", "Mode") === "Move";
+        L.fl.style.backgroundImage = "linear-gradient(" + ((move ? 0 : (t * P(L, "flow", "Speed")) % 360) + 90) + "deg, #ff4040, #ffd240, #40ff6a, #40d9ff, #4060ff, #c040ff, #ff4040)";
+        L.fl.style.backgroundPosition = (move ? ((t * P(L, "flow", "Speed") / 180) % 2) * 50 : 0) + "% 0";
+      }
+      if (L.gl) {
+        const cycle = P(L, "gleam", "Time") + P(L, "gleam", "Pause"), c = t % cycle, p = Math.min(1, c / P(L, "gleam", "Time"));
+        L.gl.style.backgroundPosition = (150 - ease.sine(p) * 200) + "% 0";
+        L.gl.style.opacity = c < P(L, "gleam", "Time") ? 1 : 0;
+      }
+    }
+  }
+  requestAnimationFrame(frame);
+
+  // ---------- building the scene
+  function overlays(L, url) {
+    for (const o of [L.gl, L.fl]) if (o) o.remove();
+    L.gl = L.fl = null;
+    const mask = { webkitMaskImage: "url(" + url + ")", maskImage: "url(" + url + ")", webkitMaskSize: "100% 100%", maskSize: "100% 100%" };
+    if (has(L, "gleam")) {
+      L.gl = document.createElement("div");
+      Object.assign(L.gl.style, { position: "absolute", inset: 0, pointerEvents: "none", backgroundSize: "300% 100%",
+        backgroundImage: "linear-gradient(100deg, transparent 40%, " + P(L, "gleam", "Color") + " 50%, transparent 60%)" }, mask);
+      L.el.appendChild(L.gl);
+    }
+    if (has(L, "flow")) {
+      L.fl = document.createElement("div");
+      Object.assign(L.fl.style, { position: "absolute", inset: 0, pointerEvents: "none", mixBlendMode: "multiply", backgroundSize: (200 / Math.max(1, Math.min(3, P(L, "flow", "Bands") || 1))) + "% 100%" }, mask);
+      L.el.appendChild(L.fl);
+    }
+    L.url = url;
+  }
+  function build(scene) {
+    const stage = $("stage");
+    if (root) root.el.remove();
+    stage.querySelectorAll(".pv-fx").forEach((n) => n.remove());
+    $("pvEmpty").hidden = true;
+    const rootEl = document.createElement("div");
+    rootEl.id = "pv";
+    // a transparent sizer keeps the root at the design's aspect ratio whatever the first slice is
+    const sizer = document.createElement("canvas");
+    sizer.width = Math.max(1, Math.round(scene.w)); sizer.height = Math.max(1, Math.round(scene.h));
+    const img = new Image();
+    img.src = sizer.toDataURL();
+    rootEl.appendChild(img);
+    const s = sel();
+    const rootInfo = Object.assign({ w: scene.w, h: scene.h, tags: {} }, s && s.id === scene.id ? s : {}, { w: scene.w, h: scene.h });
+    root = newLayer(rootEl, rootInfo);
+    root.live = !!(s && s.id === scene.id);
+    root.tags = demoTags || (root.live ? (s.tags || {}) : rootInfo.tags || {});
+    layers = [root];
+    overlays(root, scene.maskUrl || scene.baseUrl);
+    for (const ly of scene.stack || []) {
+      if (ly.type === "chunk") {
+        const ch = new Image();
+        ch.src = ly.url;
+        Object.assign(ch.style, { position: "absolute", left: 0, top: 0, width: "100%", height: "100%", maxWidth: "none", maxHeight: "none", pointerEvents: "none" });
+        rootEl.appendChild(ch);
+        continue;
+      }
+      const el = document.createElement("div");
+      Object.assign(el.style, { position: "absolute", left: ly.x / scene.w * 100 + "%", top: ly.y / scene.h * 100 + "%",
+        width: ly.w / scene.w * 100 + "%", height: ly.h / scene.h * 100 + "%", pointerEvents: "none", willChange: "transform, opacity, filter" });
+      const im = new Image();
+      im.src = ly.url;
+      Object.assign(im.style, { width: "100%", height: "100%", display: "block" });
+      el.appendChild(im);
+      rootEl.appendChild(el);
+      const L = newLayer(el, ly);
+      overlays(L, ly.url);
+      layers.push(L);
+    }
+    rootEl.onpointerenter = () => { hover = true; onState(); };
+    rootEl.onpointerleave = () => { hover = false; press = false; onState(); };
+    rootEl.onpointermove = (e) => { pointer = { x: e.clientX, y: e.clientY }; };
+    rootEl.onpointerdown = (e) => {
+      rootEl.setPointerCapture(e.pointerId);
+      press = true; onState();
+      for (const L of layers) if (has(L, "ripple")) ripple(L, e.clientX, e.clientY);
+    };
+    rootEl.onpointerup = () => {
+      if (press) for (const L of layers) if (has(L, "burst")) burst(L);
+      press = false; onState();
+    };
+    stage.appendChild(rootEl);
+    replay();
+    hint();
+  }
+
+  function hint() {
+    const s = sel();
+    const names = [...new Set(layers.flatMap((L) => Object.keys(L.tags)))];
+    const studioOnly = names.filter((n) => ["fall", "drift", "pointer", "prompt", "hold", "shiny", "beam", "glint", "card", "select"].includes(n));
+    $("pvHint").textContent = demoTags ? "Preview (not applied)"
+      : !s ? "Select one layer" : !names.length ? "Pick an effect below to see it move"
+      : studioOnly.length ? "Studio only: " + studioOnly.map((n) => "_" + n).join(" ")
+      : (layers.length > 1 ? layers.length + " animated layers · " : "") + "hover and click";
+  }
+
+  // ---------- public
+  function scene(msg) {
+    urls.forEach((u) => URL.revokeObjectURL(u));
+    urls = [];
+    const mk = (bytes) => { const u = URL.createObjectURL(new Blob([bytes], { type: "image/png" })); urls.push(u); return u; };
+    const stack = msg.stack.map((l) => Object.assign({}, l, { url: mk(l.bytes) }));
+    const firstChunk = stack.find((l) => l.type === "chunk");
+    lastScene = { id: msg.id, w: msg.w, h: msg.h, stack, baseUrl: firstChunk ? firstChunk.url : null };
+    build(lastScene);
+  }
+  function mount(url, w, h) { lastScene = { id: null, baseUrl: url, w, h: h || w, stack: [{ type: "chunk", url }] }; build(lastScene); }
+  function replay() { t0 = performance.now(); hover = press = false; for (const L of layers) { resetCh(L); entrance(L); } }
+  function exit() {
+    if (!root) return;
+    let dur = 0;
+    for (const L of layers) dur = Math.max(dur, exitLayer(L));
+    if (!dur) { root.ch.a.exit = 0; dur = .01; }
+    setTimeout(() => { if (root) root.el.style.visibility = "hidden"; }, dur * 1000);
+    setTimeout(() => { if (root) root.el.style.visibility = ""; replay(); }, dur * 1000 + 450);
+  }
+  function configure() {
+    const s = sel();
+    if (demoTags) return;
+    if (!s) {
+      if (root) { root.el.remove(); root = null; layers = []; }
+      $("pvEmpty").hidden = false;
+      hint();
+      return;
+    }
+    if (root && root.live) {
+      const before = has(root, "gleam") + "|" + has(root, "flow");
+      root.tags = s.tags || {};
+      if (before !== has(root, "gleam") + "|" + has(root, "flow")) overlays(root, root.url);
+    }
+    hint();
+  }
+  function sampleUrl() {
+    const c = document.createElement("canvas");
+    c.width = 240; c.height = 150;
+    const x = c.getContext("2d");
+    const g = x.createLinearGradient(0, 0, 0, 150);
+    g.addColorStop(0, "#5ac8fa"); g.addColorStop(1, "#007aff");
+    x.fillStyle = g; x.beginPath(); x.roundRect(8, 8, 224, 134, 28); x.fill();
+    x.fillStyle = "#fff"; x.font = "700 34px -apple-system, Inter, sans-serif"; x.textAlign = "center"; x.textBaseline = "middle";
+    x.fillText("PLAY", 120, 76);
+    return c.toDataURL("image/png");
+  }
+  // try an effect for a moment without applying it
+  function demo(key, section, sectionKeys) {
+    endDemo(true);
+    const s = sel();
+    const base = Object.assign({}, s ? s.tags || {} : {});
+    for (const k of sectionKeys) delete base[k];
+    base[key] = true;
+    demoTags = base;
+    if (!root || !s) { const u = sampleUrl(); build({ id: null, baseUrl: u, w: 240, h: 150, stack: [{ type: "chunk", url: u }] }); }
+    else { root.tags = demoTags; overlays(root, root.url); replay(); }
+    $("stage").classList.add("demo");
+    hint();
+    const tick = () => {
+      if (!root) return;
+      const r = root.el.getBoundingClientRect();
+      if (section === "hover") { hover = !hover; if (key === "tilt3d") pointer = { x: r.left + r.width * (Math.random() > .5 ? .9 : .1), y: r.top + r.height * (Math.random() > .5 ? .9 : .1) }; onState(); }
+      else if (section === "click") {
+        press = true; onState();
+        if (has(root, "ripple")) ripple(root, r.left + r.width / 2, r.top + r.height / 2);
+        setTimeout(() => { press = false; onState(); if (has(root, "burst")) burst(root); }, 160);
+      }
+      else if (section === "appear") replay();
+      else if (section === "exit") exit();
+    };
+    tick();
+    demoLoop = setInterval(tick, section === "exit" ? 1800 : section === "appear" ? 1600 : 1100);
+  }
+  function endDemo(silent) {
+    if (!demoTags) return;
+    clearInterval(demoLoop);
+    demoTags = null;
+    hover = press = false;
+    $("stage").classList.remove("demo");
+    if (sel() && lastScene && lastScene.id === sel().id) build(lastScene);
+    else if (root) { root.el.remove(); root = null; layers = []; $("pvEmpty").hidden = false; }
+    if (!silent) configure();
+  }
+  // Auto: plays the whole life of the element on a loop
+  function auto(on) {
+    clearInterval(autoLoop);
+    autoLoop = null;
+    if (!on) { hover = press = false; onState(); return; }
+    const steps = [
+      () => replay(),
+      () => { hover = true; onState(); },
+      () => { press = true; onState(); const r = root && root.el.getBoundingClientRect(); if (r) for (const L of layers) if (has(L, "ripple")) ripple(L, r.left + r.width / 2, r.top + r.height / 2); },
+      () => { press = false; onState(); for (const L of layers) if (has(L, "burst")) burst(L); },
+      () => { hover = false; onState(); },
+      () => exit(),
+    ];
+    let i = 0;
+    const run = () => { if (root) steps[i % steps.length](); i++; };
+    run();
+    autoLoop = setInterval(run, 1100);
+  }
+  return { scene, mount, replay, configure, exit, demo, endDemo, auto };
+})();
+
+// ---------- image processing ----------
+function toBase64(bytes) {
+  let s = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(s);
+}
+function hashBytes(bytes) {
+  let h1 = 0x811c9dc5, h2 = 0x01000193;
+  for (let i = 0; i < bytes.length; i++) {
+    h1 = Math.imul(h1 ^ bytes[i], 16777619);
+    h2 = Math.imul(h2 + bytes[i], 2246822519) ^ (h2 >>> 13);
+  }
+  return (h1 >>> 0).toString(16).padStart(8, "0") + (h2 >>> 0).toString(16).padStart(8, "0") + bytes.length.toString(16);
+}
+async function decode(bytes) {
+  const bmp = await createImageBitmap(new Blob([bytes]));
+  let w = bmp.width, h = bmp.height;
+  const k = Math.min(1, 1024 / Math.max(w, h));
+  w = Math.max(1, Math.round(w * k)); h = Math.max(1, Math.round(h * k));
+  const canvas = document.createElement("canvas");
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(bmp, 0, 0, w, h);
+  const rgba = new Uint8Array(ctx.getImageData(0, 0, w, h).data.buffer);
+  return { w, h, rgba, png: canvas.toDataURL("image/png").split(",")[1] };
+}
+function remap(node, map) {
+  if (node.img && map[node.img.id]) node.img.id = map[node.img.id];
+  for (const key in node.settings || {}) {
+    const icon = node.settings[key].Icon;
+    if (icon && icon.img && map[icon.img]) icon.img = map[icon.img];
+  }
+  if (node.children) node.children.forEach((c) => remap(c, map));
+}
+
+async function upload(doc, rawImages, channel) {
+  const server = $("server").value.trim().replace(/\/$/, "");
+  const map = {}, images = {};
+  let i = 0;
+  for (const im of rawImages) {
+    setStatus("Processing images " + (++i) + " of " + rawImages.length + "…");
+    const d = await decode(im.bytes);
+    const id = hashBytes(d.rgba);
+    map[im.key] = id;
+    if (!images[id]) images[id] = { w: d.w, h: d.h, data: toBase64(d.rgba), png: d.png };
+  }
+  remap(doc.root, map);
+  setStatus("Uploading…");
+  const res = await fetch(server + "/api/upload", {
+    method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ doc, images, channel: channel || undefined }),
+  });
+  if (!res.ok) throw new Error("Server answered " + res.status);
+  return (await res.json()).code;
+}
+
+let thumbUrl = null;
+onmessage = async (e) => {
+  const msg = e.data.pluginMessage;
+  if (!msg) return;
+  if (msg.type === "init") { TAGS = msg.tags; DEFAULTS = msg.defaults; PRESETS = msg.presets; SECTIONS = msg.sections || []; myPresets = msg.myPresets || []; $("server").value = msg.server; renderMyPresets(); renderSelection(); }
+  else if (msg.type === "selection") {
+    if (pickFor && msg.selection.length === 1 && msg.selection[0].id !== pickFor.targetId) {
+      if (pickFor.mode === "link") post({ type: "setLink", targetId: pickFor.targetId, destId: msg.selection[0].id, action: "open" });
+      else post({ type: "setIcon", targetId: pickFor.targetId, iconId: msg.selection[0].id, key: pickFor.key });
+      pickFor = null; $("picking").hidden = true;
+      return; // plugin re-selects the target and sends a fresh selection
+    }
+    selection = msg.selection; pagePanels = msg.panels || []; renderSelection();
+  }
+  else if (msg.type === "scene") {
+    if (!selection.length || selection[0].id !== msg.id) return;
+    preview.scene(msg);
+  }
+  else if (msg.type === "thumb") {
+    if (!selection.length || selection[0].id !== msg.id) return;
+    if (thumbUrl) URL.revokeObjectURL(thumbUrl);
+    thumbUrl = URL.createObjectURL(new Blob([msg.bytes], { type: "image/png" }));
+    preview.mount(thumbUrl, msg.w);
+  }
+  else if (msg.type === "status") setStatus(msg.message);
+  else if (msg.type === "error") { setStatus(msg.message, true); renderSelection(); }
+  else if (msg.type === "checked") renderIssues(msg.issues);
+  else if (msg.type === "windows") { if (sheetFor && sheetFor.id === msg.targetId) renderWindows(msg.list, msg.info); }
+  else if (msg.type === "effects") {
+    if (!Object.keys(msg.effects.tags).length) { setStatus("That layer has no effects to copy.", true); return; }
+    if (msg.purpose === "preset") { myPresets.push({ name: msg.name, effects: msg.effects }); post({ type: "savePresets", list: myPresets }); renderMyPresets(); }
+    else { fxClip = msg.effects; $("pasteFx").disabled = false; $("pasteFx").textContent = "Paste " + Object.keys(fxClip.tags).length + " effect(s)"; }
+  }
+  else if (msg.type === "live") {
+    $("liveSwitch").setAttribute("aria-checked", String(!!msg.on));
+    $("liveHint").textContent = msg.on ? "Syncing “" + msg.name + "”. In Studio paste " + msg.code + " and turn Live sync on."
+      : (msg.message || "Edits land in Studio by themselves. Keep this window open.");
+    if (msg.on) { $("code").textContent = msg.code; $("codeCard").hidden = false; }
+  }
+  else if (msg.type === "exported" && msg.live) {
+    try {
+      await upload(msg.doc, msg.images, msg.live);
+      setStatus("Synced " + new Date().toLocaleTimeString() + " · code " + msg.live);
+    } catch (err) {
+      setStatus("Sync failed: " + err.message + ". Is the server running?", true);
+    }
+    post({ type: "uploadDone" });
+  }
+  else if (msg.type === "exported") {
+    post({ type: "uploadDone" });
+    try {
+      const code = await upload(msg.doc, msg.images);
+      $("code").textContent = code;
+      $("codeCard").hidden = false;
+      $("codeCard").classList.remove("in"); void $("codeCard").offsetWidth; $("codeCard").classList.add("in");
+      setStatus("Ready. Paste the code in Roblox Studio.");
+      if (msg.doc.warnings.length) {
+        $("warnings").hidden = false;
+        $("warnings").innerHTML = "<b>Notes</b><br>" + msg.doc.warnings.map((w) => w.replace(/</g, "&lt;")).join("<br>");
+      }
+    } catch (err) {
+      setStatus("Upload failed: " + err.message + ". Is the server running?", true);
+    }
+    $("exportBtn").disabled = selection.length !== 1;
+  }
+};
+</script>

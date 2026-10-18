@@ -1,0 +1,14 @@
+{
+  "name": "FigBridge",
+  "id": "figbridge-local-dev",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"],
+    "devAllowedDomains": ["http://localhost:7777"],
+    "reasoning": "Sends the exported design to the local FigBridge server."
+  }
+}

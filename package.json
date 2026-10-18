@@ -1,0 +1,17 @@
+{
+  "name": "figbridge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Turn Figma frames into native Roblox UI with a six-letter code",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "node server/server.js",
+    "build": "node roblox-plugin/build.js",
+    "install-plugin": "node roblox-plugin/build.js --install",
+    "docs": "node tools/tags-doc.js",
+    "check": "node --check server/server.js && node --check figma-plugin/code.js && node --check roblox-plugin/build.js && node --check tools/tags-doc.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
